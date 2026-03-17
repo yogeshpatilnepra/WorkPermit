@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/loginFragment">
+
+    <fragment
+        android:id="@+id/loginFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.auth.LoginFragment"
+        android:label="Login"
+        tools:layout="@layout/fragment_login">
+        <action
+            android:id="@+id/action_loginFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.home.HomeFragment"
+        android:label="Dashboard"
+        tools:layout="@layout/fragment_home">
+
+        <action
+            android:id="@+id/action_homeFragment_to_myPermitsFragment"
+            app:destination="@id/myPermitsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_pendingApprovalsFragment"
+            app:destination="@id/pendingApprovalsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_activePermitsFragment"
+            app:destination="@id/activePermitsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_createPermitFragment"
+            app:destination="@id/createPermitFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_notificationsFragment"
+            app:destination="@id/notificationsFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_qrScanFragment"
+            app:destination="@id/qrScanFragment" />
+        <action
+            android:id="@+id/action_homeFragment_to_searchFilterFragment"
+            app:destination="@id/searchFilterFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/myPermitsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.MyPermitsFragment"
+        android:label="My Permits"
+        tools:layout="@layout/fragment_my_permits">
+        <action
+            android:id="@+id/action_myPermitsFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
+        <action
+            android:id="@+id/action_myPermitsFragment_to_createPermitFragment"
+            app:destination="@id/createPermitFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/pendingApprovalsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.PendingApprovalsFragment"
+        android:label="Pending Approvals"
+        tools:layout="@layout/fragment_pending_approvals">
+        <action
+            android:id="@+id/action_pendingApprovalsFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/activePermitsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.ActivePermitsFragment"
+        android:label="Active Permits"
+        tools:layout="@layout/fragment_active_permits">
+        <action
+            android:id="@+id/action_activePermitsFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
+        <action
+            android:id="@+id/action_activePermitsFragment_to_workerSignInFragment"
+            app:destination="@id/workerSignInFragment" />
+        <action
+            android:id="@+id/action_activePermitsFragment_to_workerSignOutFragment"
+            app:destination="@id/workerSignOutFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/permitDetailsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.PermitDetailsFragment"
+        android:label="Permit Details"
+        tools:layout="@layout/fragment_permit_details">
+        <argument
+            android:name="permitId"
+            app:argType="string" />
+        <action
+            android:id="@+id/action_permitDetailsFragment_to_uploadAttachmentFragment"
+            app:destination="@id/uploadAttachmentFragment" />
+        <action
+            android:id="@+id/action_permitDetailsFragment_to_workerSignInFragment"
+            app:destination="@id/workerSignInFragment" />
+        <action
+            android:id="@+id/action_permitDetailsFragment_to_workerSignOutFragment"
+            app:destination="@id/workerSignOutFragment" />
+        <action
+            android:id="@+id/action_permitDetailsFragment_to_permitClosureFragment"
+            app:destination="@id/permitClosureFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/createPermitFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.CreatePermitFragment"
+        android:label="Create Permit"
+        tools:layout="@layout/fragment_create_permit">
+        <action
+            android:id="@+id/action_createPermitFragment_to_dynamicFormFragment"
+            app:destination="@id/dynamicFormFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/dynamicFormFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.DynamicFormFragment"
+        android:label="Permit Form"
+        tools:layout="@layout/fragment_dynamic_form">
+        <argument
+            android:name="permitType"
+            app:argType="com.ptw.demo.domain.models.PermitType" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/uploadAttachmentFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.attachments.UploadAttachmentFragment"
+        android:label="Upload Attachment"
+        tools:layout="@layout/fragment_upload_attachment">
+        <argument
+            android:name="permitId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/qrScanFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.qr.QRScanFragment"
+        android:label="Scan QR"
+        tools:layout="@layout/fragment_q_r_scan" />
+
+    <fragment
+        android:id="@+id/workerSignInFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.worker.WorkerSignInFragment"
+        android:label="Worker Sign In"
+        tools:layout="@layout/fragment_worker_sign_in">
+        <argument
+            android:name="permitId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/workerSignOutFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.worker.WorkerSignOutFragment"
+        android:label="Worker Sign Out"
+        tools:layout="@layout/fragment_worker_sign_out">
+        <argument
+            android:name="permitId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/permitClosureFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.PermitClosureFragment"
+        android:label="Close Permit"
+        tools:layout="@layout/fragment_permit_closure">
+        <argument
+            android:name="permitId"
+            app:argType="string" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/notificationsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.notifications.NotificationsFragment"
+        android:label="Notifications"
+        tools:layout="@layout/fragment_notifications" />
+
+    <fragment
+        android:id="@+id/searchFilterFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.search.SearchFilterFragment"
+        android:label="Search &amp; Filter"
+        tools:layout="@layout/fragment_search_filter" />
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.profile.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile">
+        <action
+            android:id="@+id/action_profileFragment_to_loginFragment"
+            app:destination="@id/loginFragment"
+            app:popUpTo="@id/loginFragment"
+            app:popUpToInclusive="true" />
+        <action
+            android:id="@+id/action_profileFragment_to_notificationsFragment"
+            app:destination="@id/notificationsFragment" />
+    </fragment>
+
+</navigation>

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        style="@style/llVerticalMatchWrap"
+        android:layout_height="wrap_content"
+        android:background="#00000000"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <androidx.core.widget.NestedScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="30dp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="@color/listColor"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <TextView
+                    android:id="@+id/tvTitle"
+                    style="@style/textviewBoldStyle"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="@dimen/_20sdp"
+                    android:text="Alert"
+                    android:textSize="20dp" />
+
+                <TextView
+                    android:id="@+id/tv_msg"
+                    style="@style/textviewRegularStyle"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="@dimen/_5sdp"
+                    android:gravity="center" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="5dp">
+
+                    <Button
+                        android:id="@+id/btn_cancle"
+                        style="@style/buttonStrokeStyle"
+                        android:layout_marginRight="8dp"
+                        android:background="@drawable/rectangle_corner_btn_stroke"
+                        android:clickable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:text="@string/cancel"
+                        android:textAllCaps="false"
+                        android:textColor="@color/grayDark80"
+                        android:textSize="16dp"
+                        android:visibility="gone" />
+
+                    <Button
+                        android:id="@+id/btn_ok"
+                        style="@style/buttonStyle"
+                        android:clickable="true"
+                        android:foreground="?android:attr/selectableItemBackground"
+                        android:text="@string/okay"
+                        android:textAllCaps="false"
+                        android:textColor="@color/whiteTxt"
+                        android:textSize="16dp" />
+                </LinearLayout>
+            </LinearLayout>
+        </androidx.core.widget.NestedScrollView>
+
+        <LinearLayout
+            android:id="@+id/llCircle"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/circle"
+            android:backgroundTint="@color/listColor"
+            android:gravity="center">
+
+            <ImageView
+                android:id="@+id/ivAlert"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:padding="3dp"
+                android:src="@drawable/ic_baseline_info"
+                app:tint="@color/linkColor" />
+
+            <ImageView
+                android:id="@+id/ivSuccess"
+                android:layout_width="55dp"
+                android:layout_height="55dp"
+                android:padding="3dp"
+                android:src="@drawable/correct"
+                android:visibility="gone" />
+        </LinearLayout>
+    </RelativeLayout>
+</layout>

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "2604542385",
+    "project_id": "skeletonapicallcode",
+    "storage_bucket": "skeletonapicallcode.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:2604542385:android:39cb2ec461dc8c96003590",
+        "android_client_info": {
+          "package_name": "com.apiscall.skeletoncode"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpOGIfRb1eAU59uOA0f-uDL44wQijhQLg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

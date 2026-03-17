@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="assentColor">#FFC099</color>
+    <color name="lightBackground">#F2F2F2</color>
+    <color name="blackColor">#000000</color>
+    <color name="blackTxt">#000000</color>
+    <color name="whiteTxt">#FFFFFF</color>
+    <color name="primaryColor">#fe8031</color>
+    <color name="primaryDarkColor">#F45E01</color>
+    <color name="listColor">#FFFFFF</color>
+    <color name="grayDark80">#808080</color>
+    <color name="linkColor">#fe8031</color>
+
+    <color name="safety_blue">#1E3A8A</color>
+    <color name="safety_blue_light">#E8F0FE</color>
+    <color name="safety_blue_dark">#0F2656</color>
+
+    <color name="safety_green">#10B981</color>
+    <color name="safety_green_light">#D1FAE5</color>
+    <color name="safety_green_dark">#047857</color>
+
+    <color name="safety_yellow">#F59E0B</color>
+    <color name="safety_yellow_light">#FEF3C7</color>
+    <color name="safety_yellow_dark">#B45309</color>
+
+    <color name="safety_red">#EF4444</color>
+    <color name="safety_red_light">#FEE2E2</color>
+    <color name="safety_red_dark">#B91C1C</color>
+
+    <color name="safety_orange">#F97316</color>
+    <color name="safety_orange_light">#FFEDD5</color>
+
+    <color name="safety_purple">#8B5CF6</color>
+    <color name="safety_purple_light">#EDE9FE</color>
+
+    <!-- Status Colors -->
+    <color name="status_draft">#6B7280</color>
+    <color name="status_pending">#F59E0B</color>
+    <color name="status_approved">#10B981</color>
+    <color name="status_rejected">#EF4444</color>
+    <color name="status_active">#3B82F6</color>
+    <color name="status_closed">#6B7280</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#1F2937</color>
+    <color name="text_secondary">#6B7280</color>
+    <color name="text_hint">#9CA3AF</color>
+
+    <!-- Background Colors -->
+    <color name="background_light">#F9FAFB</color>
+    <color name="background_dark">#111827</color>
+    <color name="surface">#FFFFFF</color>
+
+    <!-- Divider -->
+    <color name="divider">#E5E7EB</color>
+</resources>

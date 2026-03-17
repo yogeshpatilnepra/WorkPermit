@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <RelativeLayout
+        style="@style/llVerticalMatchWrap"
+        android:layout_height="wrap_content"
+        android:background="#00000000"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/_50sdp"
+            android:background="@drawable/rectangle"
+            android:backgroundTint="@color/lightBackground"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <com.airbnb.lottie.LottieAnimationView
+                android:layout_width="@dimen/_120sdp"
+                android:layout_height="@dimen/_120sdp"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_55sdp"
+                app:lottie_autoPlay="true"
+                app:lottie_imageAssetsFolder="images"
+                app:lottie_loop="false"
+                app:lottie_rawRes="@raw/version" />
+
+            <TextView
+                android:id="@+id/tvTitle"
+                style="@style/textviewBoldStyle"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_15sdp"
+                android:text="@string/application_update"
+                android:textColor="@color/blackTxt"
+                android:textSize="@dimen/_20sdp" />
+
+            <TextView
+                style="@style/textviewRegularStyle"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_10sdp"
+                android:gravity="center"
+                android:text="@string/app_update_hint"
+                android:textColor="@color/blackTxt" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/_15sdp"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <LinearLayout
+                    style="@style/llVerticalMatchWrap"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        style="@style/textviewRegularStyle"
+                        android:gravity="center"
+                        android:text="@string/current_version"
+                        android:textColor="@color/blackTxt" />
+
+                    <TextView
+                        android:id="@+id/tvCurrentVersion"
+                        style="@style/textviewBoldStyle"
+                        android:gravity="center"
+                        android:text="1.0"
+                        android:textColor="@color/blackTxt" />
+                </LinearLayout>
+
+                <LinearLayout
+                    style="@style/llVerticalMatchWrap"
+                    android:layout_weight="1"
+                    android:gravity="center">
+
+                    <TextView
+                        style="@style/textviewRegularStyle"
+                        android:gravity="center"
+                        android:text="@string/new_version"
+                        android:textColor="@color/blackTxt" />
+
+                    <TextView
+                        android:id="@+id/tvNewVersion"
+                        style="@style/textviewBoldStyle"
+                        android:gravity="center"
+                        android:text="1.0"
+                        android:textColor="@color/blackTxt" />
+                </LinearLayout>
+
+
+            </LinearLayout>
+
+            <LinearLayout
+                style="@style/llHorizontalMatchWrap"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/btnDismiss"
+                    style="@style/buttonStrokeStyle"
+                    android:layout_marginRight="@dimen/_5sdp"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:text="@string/dismiss"
+                    android:textColor="@color/blackTxt" />
+
+                <Button
+                    android:id="@+id/btnUpdate"
+                    style="@style/buttonStyle"
+                    android:layout_marginLeft="@dimen/_5sdp"
+                    android:layout_weight="1"
+                    android:clickable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:text="@string/update"
+                    android:textColor="@color/whiteTxt" />
+
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvSkip"
+                style="@style/textviewBoldStyle"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/_5sdp"
+                android:layout_marginBottom="@dimen/_5sdp"
+                android:gravity="center"
+                android:paddingHorizontal="@dimen/_8sdp"
+                android:paddingVertical="@dimen/_3sdp"
+                android:text="@string/skip_for_now"
+                android:textColor="@color/primaryColor"
+                android:textSize="@dimen/_15sdp" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/llCircle"
+            android:layout_width="@dimen/_100sdp"
+            android:layout_height="@dimen/_100sdp"
+            android:layout_centerHorizontal="true"
+            android:background="@drawable/circle"
+            android:backgroundTint="@color/lightBackground"
+            android:gravity="center">
+
+            <ImageView
+                android:layout_width="@dimen/_98sdp"
+                android:layout_height="@dimen/_98sdp"
+                android:padding="@dimen/_10sdp"
+                android:src="@drawable/ic_version"
+                app:tint="@color/primaryColor" />
+
+        </LinearLayout>
+    </RelativeLayout>
+</layout>

@@ -1,0 +1,122 @@
+<resources>
+    <string name="app_name">SkeletonApicallCode</string>
+    <string name="application_update">Application Update !!!</string>
+    <string name="app_update_hint">We have enhance the application and added some new and exiting features</string>
+    <string name="current_version">Current Version</string>
+    <string name="new_version">New Version</string>
+    <string name="dismiss">Dismiss</string>
+    <string name="update">Update</string>
+    <string name="skip_for_now"><u>Skip Now</u></string>
+    <string name="cancel">Cancel</string>
+    <string name="okay">Ok</string>
+    <string name="success">Success</string>
+    <string name="something_went">There is issue on server side. Please try again.</string>
+    <string name="no_internet">No Internet</string>
+    <string name="internet_desc">Sorry !!! Internet not avaialble. Please check internet connectivity and try again.</string>
+
+
+    <!--new strings-->
+    <!-- Navigation Labels -->
+    <string name="nav_home">Home</string>
+    <string name="nav_permits">Permits</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_profile">Profile</string>
+
+    <!-- Login Screen -->
+    <string name="welcome_back">Welcome Back</string>
+    <string name="sign_in_continue">Sign in to continue</string>
+    <string name="demo_credentials_hint">Use demo credentials:</string>
+    <string name="demo_credentials">contractor1 / password123</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="sign_in">Sign In</string>
+    <string name="forgot_password">Forgot password?</string>
+    <string name="version">Version 1.0.0</string>
+
+    <!-- Home Screen -->
+    <string name="dashboard">Dashboard</string>
+    <string name="good_morning">Good morning,</string>
+    <string name="good_afternoon">Good afternoon,</string>
+    <string name="good_evening">Good evening,</string>
+    <string name="overview">Overview</string>
+    <string name="quick_actions">Quick Actions</string>
+    <string name="recent_permits">Recent Permits</string>
+    <string name="view_all">View All</string>
+
+    <!-- Stats Labels -->
+    <string name="total_permits">Total Permits</string>
+    <string name="pending_approvals">Pending</string>
+    <string name="active_permits">Active</string>
+    <string name="expiring_today">Expiring Today</string>
+
+    <!-- Quick Actions -->
+    <string name="new_permit">New Permit</string>
+    <string name="scan_qr">Scan QR</string>
+    <string name="search">Search</string>
+    <string name="sync">Sync</string>
+
+    <!-- Permit Status -->
+    <string name="status_draft">Draft</string>
+    <string name="status_pending">Pending</string>
+    <string name="status_approved">Approved</string>
+    <string name="status_rejected">Rejected</string>
+    <string name="status_active">Active</string>
+    <string name="status_closed">Closed</string>
+    <string name="status_expired">Expired</string>
+
+    <!-- Permit Types -->
+    <string name="permit_type_hot_work">Hot Work</string>
+    <string name="permit_type_cold_work">Cold Work</string>
+    <string name="permit_type_loto">LOTO</string>
+    <string name="permit_type_confined_space">Confined Space</string>
+    <string name="permit_type_work_at_height">Work at Height</string>
+    <string name="permit_type_lifting">Lifting</string>
+    <string name="permit_type_live_equipment">Live Equipment</string>
+
+    <!-- Button Labels -->
+    <string name="btn_submit">Submit</string>
+    <string name="btn_save_draft">Save Draft</string>
+    <string name="btn_approve">Approve</string>
+    <string name="btn_reject">Reject</string>
+    <string name="btn_send_back">Send Back</string>
+    <string name="btn_close">Close</string>
+    <string name="btn_sign_in">Sign In</string>
+    <string name="btn_sign_out">Sign Out</string>
+    <string name="btn_upload">Upload</string>
+    <string name="btn_cancel">Cancel</string>
+
+    <!-- Messages -->
+    <string name="loading">Loading...</string>
+    <string name="no_data">No data available</string>
+    <string name="error_occurred">An error occurred</string>
+    <string name="login_success">Login successful</string>
+    <string name="login_failed">Login failed. Please check your credentials.</string>
+    <string name="logout_success">Logged out successfully</string>
+    <string name="permit_created">Permit created successfully</string>
+    <string name="permit_submitted">Permit submitted for approval</string>
+    <string name="permit_approved">Permit approved</string>
+    <string name="permit_rejected">Permit rejected</string>
+    <string name="attachment_uploaded">Attachment uploaded successfully</string>
+    <string name="worker_signed_in">Worker signed in successfully</string>
+    <string name="worker_signed_out">Worker signed out successfully</string>
+
+    <!-- Form Labels -->
+    <string name="permit_title">Permit Title</string>
+    <string name="permit_type">Permit Type</string>
+    <string name="location">Location</string>
+    <string name="description">Description</string>
+    <string name="start_date">Start Date</string>
+    <string name="end_date">End Date</string>
+    <string name="remarks">Remarks</string>
+    <string name="closure_remarks">Closure Remarks</string>
+    <string name="comments">Comments</string>
+    <string name="attachments">Attachments</string>
+    <string name="approval_history">Approval History</string>
+    <string name="workers">Workers</string>
+
+    <!-- Safety Alert -->
+    <string name="safety_moment">Safety Moment</string>
+    <string name="safety_alert_message">Remember to perform gas test before hot work</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>
