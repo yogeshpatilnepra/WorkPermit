@@ -1,6 +1,7 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.main
 
 import android.os.Bundle
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.navigation.findNavController
@@ -11,6 +12,7 @@ import com.apiscall.skeletoncode.R
 import com.apiscall.skeletoncode.databinding.ActivityMainBinding
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
+
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -28,22 +30,11 @@ class MainActivity : AppCompatActivity() {
     private fun setupNavigation() {
         val navController = findNavController(R.id.nav_host_fragment)
 
-        // Set up action bar
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.homeFragment,
-                R.id.myPermitsFragment,
-                R.id.notificationsFragment,
-                R.id.profileFragment
-            )
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-
         // Set up bottom navigation
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottom_nav)
         bottomNav.setupWithNavController(navController)
 
-        // Hide bottom navigation on certain fragments
+        // Hide/show bottom navigation based on destination
         navController.addOnDestinationChangedListener { _, destination, _ ->
             when (destination.id) {
                 R.id.loginFragment,
@@ -56,20 +47,17 @@ class MainActivity : AppCompatActivity() {
                 R.id.workerSignOutFragment,
                 R.id.permitClosureFragment,
                 R.id.searchFilterFragment -> {
+                    // Hide bottom nav for these fragments
                     bottomNav.isVisible = false
-                    supportActionBar?.hide()
                 }
-
                 else -> {
+                    // Show bottom nav for main fragments
                     bottomNav.isVisible = true
-                    supportActionBar?.show()
                 }
             }
         }
     }
-
     override fun onSupportNavigateUp(): Boolean {
-        val navController = findNavController(R.id.nav_host_fragment)
-        return navController.navigateUp() || super.onSupportNavigateUp()
+        return findNavController(R.id.nav_host_fragment).navigateUp() || super.onSupportNavigateUp()
     }
 }

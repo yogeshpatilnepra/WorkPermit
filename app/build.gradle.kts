@@ -177,4 +177,5 @@ dependencies {
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("androidx.navigation:navigation-fragment-ktx:2.9.7")
     implementation("androidx.navigation:navigation-ui-ktx:2.9.7")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
 }

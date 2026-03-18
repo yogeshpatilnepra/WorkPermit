@@ -11,11 +11,9 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import com.apiscall.skeletoncode.R
 import com.apiscall.skeletoncode.databinding.FragmentLoginBinding
-import com.apiscall.skeletoncode.workpermitmodule.presentation.auth.LoginViewModel
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
-
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -42,10 +40,17 @@ class LoginFragment : Fragment() {
 
         setupObservers()
         setupListeners()
+
+        // Set default values in ViewModel
+        viewModel.onUsernameChanged(binding.etUsername.text.toString())
+        viewModel.onPasswordChanged(binding.etPassword.text.toString())
     }
 
     private fun setupListeners() {
         binding.btnLogin.setOnClickListener {
+            // Update ViewModel with current text before login
+            viewModel.onUsernameChanged(binding.etUsername.text.toString())
+            viewModel.onPasswordChanged(binding.etPassword.text.toString())
             viewModel.login()
         }
 
@@ -53,7 +58,7 @@ class LoginFragment : Fragment() {
             showDemoCredentialsDialog()
         }
 
-        // Live text changes
+        // Update ViewModel when text changes
         binding.etUsername.setOnEditorActionListener { _, _, _ ->
             viewModel.onUsernameChanged(binding.etUsername.text.toString())
             false
@@ -63,6 +68,23 @@ class LoginFragment : Fragment() {
             viewModel.onPasswordChanged(binding.etPassword.text.toString())
             false
         }
+
+        // Add text change listeners
+        binding.etUsername.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                viewModel.onUsernameChanged(s.toString())
+            }
+        })
+
+        binding.etPassword.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                viewModel.onPasswordChanged(s.toString())
+            }
+        })
     }
 
     private fun setupObservers() {
@@ -88,7 +110,6 @@ class LoginFragment : Fragment() {
                             resource.message ?: "Login failed",
                             Snackbar.LENGTH_LONG
                         ).show()
-                        viewModel.resetState()
                     }
 
                     is Resource.Idle -> {

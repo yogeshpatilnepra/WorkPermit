@@ -21,6 +21,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             // Mock login validation
             val user = mockDataSource.getUserByUsername(username)
+            // Accept "password123" for all demo users
             if (user != null && password == "password123") {
                 currentUser = user
                 _authState.value = true

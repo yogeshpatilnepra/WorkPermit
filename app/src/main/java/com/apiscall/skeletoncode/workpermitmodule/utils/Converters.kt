@@ -54,15 +54,24 @@ class Converters {
     }
 
     @TypeConverter
-    fun fromStringMap(value: Map<String, Any>?): String? {
-        return value?.let { gson.toJson(it) }
+    fun fromStringList(list: List<String>): String {
+        return Gson().toJson(list)
     }
 
     @TypeConverter
-    fun toStringMap(value: String?): Map<String, Any>? {
-        return value?.let {
-            val type = object : TypeToken<Map<String, Any>>() {}.type
-            gson.fromJson(it, type)
-        }
+    fun toStringList(json: String): List<String> {
+        val type = object : TypeToken<List<String>>() {}.type
+        return Gson().fromJson(json, type)
+    }
+
+    @TypeConverter
+    fun fromMap(map: Map<String, Any>): String {
+        return Gson().toJson(map)
+    }
+
+    @TypeConverter
+    fun toMap(json: String): Map<String, Any> {
+        val type = object : TypeToken<Map<String, Any>>() {}.type
+        return Gson().fromJson(json, type)
     }
 }

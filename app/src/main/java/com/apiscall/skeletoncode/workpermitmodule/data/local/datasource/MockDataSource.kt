@@ -119,7 +119,7 @@ class MockDataSource @Inject constructor() {
                         "equipment" to "Welding machine #W123",
                         "fireWatchman" to "Required",
                         "gasTest" to "Pending"
-                    ),
+                    ).toString(),
                     attachments = listOf(
                         Attachment(
                             id = "1",
@@ -163,7 +163,7 @@ class MockDataSource @Inject constructor() {
                         "oxygenLevel" to "20.9%",
                         "ventilation" to "Forced air in place",
                         "attendant" to "Assigned"
-                    ),
+                    ).toString(),
                     approvalHistory = listOf(
                         ApprovalHistory(
                             id = "2",
@@ -220,7 +220,7 @@ class MockDataSource @Inject constructor() {
                         "lanyard" to "Yes",
                         "anchorPoint" to "Certified",
                         "toolLanyard" to "Required"
-                    ),
+                    ).toString(),
                     workers = listOf(users[5]),
                     attachments = listOf(
                         Attachment(
@@ -277,231 +277,75 @@ class MockDataSource @Inject constructor() {
     }
 
     private fun initializePermitForms() {
-        // Hot Work Form Fields
         permitForms[PermitType.HOT_WORK] = listOf(
+            FormField("hw1", "Work Description", FieldType.TEXTAREA, true, order = 1),
             FormField(
-                id = "hw1",
-                label = "Work Description",
-                type = FieldType.TEXTAREA,
-                isRequired = true,
-                placeholder = "Describe the hot work to be performed",
-                order = 1
-            ),
-            FormField(
-                id = "hw2",
-                label = "Equipment Used",
-                type = FieldType.TEXT,
-                isRequired = true,
-                placeholder = "e.g., Welding machine, Grinder",
+                "hw2",
+                "Fire Watch Required",
+                FieldType.RADIO,
+                true,
+                options = listOf("Yes", "No"),
                 order = 2
             ),
             FormField(
-                id = "hw3",
-                label = "Fire Watch Required",
-                type = FieldType.RADIO,
-                isRequired = true,
+                "hw3",
+                "Gas Test Required",
+                FieldType.RADIO,
+                true,
                 options = listOf("Yes", "No"),
                 order = 3
-            ),
-            FormField(
-                id = "hw4",
-                label = "Gas Test Required",
-                type = FieldType.RADIO,
-                isRequired = true,
-                options = listOf("Yes", "No"),
-                order = 4
-            ),
-            FormField(
-                id = "hw5",
-                label = "Fire Extinguisher Available",
-                type = FieldType.CHECKBOX,
-                isRequired = false,
-                options = listOf("Yes"),
-                order = 5
-            ),
-            FormField(
-                id = "hw6",
-                label = "Work Area",
-                type = FieldType.DROPDOWN,
-                isRequired = true,
-                options = listOf("Reactor Area", "Pipe Rack", "Tank Farm", "Compressor Station"),
-                order = 6
             )
         )
-
-        // Confined Space Form Fields
-        permitForms[PermitType.CONFINED_SPACE] = listOf(
-            FormField(
-                id = "cs1",
-                label = "Space Description",
-                type = FieldType.TEXTAREA,
-                isRequired = true,
-                placeholder = "Describe the confined space",
-                order = 1
-            ),
-            FormField(
-                id = "cs2",
-                label = "Gas Test Results",
-                type = FieldType.DROPDOWN,
-                isRequired = true,
-                options = listOf("Pass", "Fail", "Pending"),
-                order = 2
-            ),
-            FormField(
-                id = "cs3",
-                label = "Oxygen Level (%)",
-                type = FieldType.NUMBER,
-                isRequired = true,
-                placeholder = "19.5-23.5",
-                minValue = 19,
-                maxValue = 24,
-                order = 3
-            ),
-            FormField(
-                id = "cs4",
-                label = "Ventilation Type",
-                type = FieldType.DROPDOWN,
-                isRequired = true,
-                options = listOf("Natural", "Forced Air", "Mechanical"),
-                order = 4
-            ),
-            FormField(
-                id = "cs5",
-                label = "Attendant Assigned",
-                type = FieldType.CHECKBOX,
-                isRequired = false,
-                options = listOf("Yes"),
-                order = 5
-            ),
-            FormField(
-                id = "cs6",
-                label = "Rescue Plan Reviewed",
-                type = FieldType.CHECKBOX,
-                isRequired = true,
-                options = listOf("Yes"),
-                order = 6
-            )
+        permitForms[PermitType.COLD_WORK] = listOf(
+            FormField("cw1", "Work Description", FieldType.TEXTAREA, true, order = 1),
+            FormField("cw2", "Tools Used", FieldType.TEXT, false, order = 2)
         )
-
-        // Add more forms for other permit types...
         permitForms[PermitType.LOTO] = listOf(
+            FormField("l1", "Equipment to Lock", FieldType.TEXT, true, order = 1),
+            FormField("l2", "Number of Locks", FieldType.NUMBER, true, order = 2)
+        )
+        permitForms[PermitType.CONFINED_SPACE] = listOf(
+            FormField("cs1", "Space Description", FieldType.TEXTAREA, true, order = 1),
             FormField(
-                id = "loto1",
-                label = "Equipment to be Locked Out",
-                type = FieldType.TEXT,
-                isRequired = true,
-                placeholder = "List equipment/tag numbers",
-                order = 1
-            ),
-            FormField(
-                id = "loto2",
-                label = "Energy Sources",
-                type = FieldType.CHECKBOX,
-                isRequired = true,
-                options = listOf(
-                    "Electrical",
-                    "Mechanical",
-                    "Hydraulic",
-                    "Pneumatic",
-                    "Chemical",
-                    "Thermal"
-                ),
+                "cs2",
+                "Gas Test Result",
+                FieldType.DROPDOWN,
+                true,
+                options = listOf("Pass", "Fail"),
                 order = 2
-            ),
-            FormField(
-                id = "loto3",
-                label = "Number of Locks Required",
-                type = FieldType.NUMBER,
-                isRequired = true,
-                placeholder = "1-10",
-                minValue = 1,
-                maxValue = 10,
-                order = 3
-            ),
-            FormField(
-                id = "loto4",
-                label = "Verification Test Performed",
-                type = FieldType.RADIO,
-                isRequired = true,
-                options = listOf("Yes", "No"),
-                order = 4
             )
         )
-
-        // Continue for other permit types...
         permitForms[PermitType.WORK_AT_HEIGHT] = listOf(
+            FormField("wah1", "Height (meters)", FieldType.NUMBER, true, order = 1),
             FormField(
-                id = "wah1",
-                label = "Height of Work (meters)",
-                type = FieldType.NUMBER,
-                isRequired = true,
-                placeholder = "2-50",
-                minValue = 2,
-                maxValue = 50,
-                order = 1
-            ),
-            FormField(
-                id = "wah2",
-                label = "Fall Protection Type",
-                type = FieldType.DROPDOWN,
-                isRequired = true,
-                options = listOf("Harness with Lanyard", "Safety Net", "Guard Rail", "Scaffold"),
+                "wah2",
+                "Harness Used",
+                FieldType.CHECKBOX,
+                true,
+                options = listOf("Yes"),
                 order = 2
-            ),
-            FormField(
-                id = "wah3",
-                label = "Anchor Point Certified",
-                type = FieldType.RADIO,
-                isRequired = true,
-                options = listOf("Yes", "No"),
-                order = 3
-            ),
-            FormField(
-                id = "wah4",
-                label = "Tool Lanyards Required",
-                type = FieldType.RADIO,
-                isRequired = true,
-                options = listOf("Yes", "No"),
-                order = 4
             )
         )
-
         permitForms[PermitType.LIFTING] = listOf(
             FormField(
-                id = "lft1",
-                label = "Crane Type",
-                type = FieldType.DROPDOWN,
-                isRequired = true,
-                options = listOf("Mobile Crane", "Overhead Crane", "Tower Crane", "Forklift"),
+                "lf1",
+                "Crane Type",
+                FieldType.DROPDOWN,
+                true,
+                options = listOf("Mobile", "Tower"),
                 order = 1
             ),
+            FormField("lf2", "Load Weight (tons)", FieldType.NUMBER, true, order = 2)
+        )
+        permitForms[PermitType.LIVE_EQUIPMENT] = listOf(
+            FormField("le1", "Equipment ID", FieldType.TEXT, true, order = 1),
             FormField(
-                id = "lft2",
-                label = "Load Weight (tons)",
-                type = FieldType.NUMBER,
-                isRequired = true,
-                placeholder = "0-500",
-                minValue = 0,
-                maxValue = 500,
+                "le2",
+                "Voltage",
+                FieldType.DROPDOWN,
+                true,
+                options = listOf("Low", "Medium", "High"),
                 order = 2
-            ),
-            FormField(
-                id = "lft3",
-                label = "Lift Radius (meters)",
-                type = FieldType.NUMBER,
-                isRequired = true,
-                placeholder = "0-100",
-                minValue = 0,
-                maxValue = 100,
-                order = 3
-            ),
-            FormField(
-                id = "lft4",
-                label = "Rigging Inspection Completed",
-                type = FieldType.RADIO,
-                isRequired = true,
-                options = listOf("Yes", "No"),
-                order = 4
             )
         )
     }

@@ -37,6 +37,8 @@ class PermitDetailsFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: PermitDetailViewModel by viewModels()
+
+    // Safe Args - auto-generated
     private val args: PermitDetailsFragmentArgs by navArgs()
 
     private lateinit var approvalHistoryAdapter: ApprovalHistoryAdapter
@@ -53,11 +55,10 @@ class PermitDetailsFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
+        setupToolbar()
         setupRecyclerViews()
         setupObservers()
         setupListeners()
-
         viewModel.loadPermitDetails(args.permitId)
     }
 
@@ -158,7 +159,6 @@ class PermitDetailsFragment : Fragment() {
         if (permit.workers.isNotEmpty()) {
             binding.workersSection.visible()
             binding.tvWorkersCount.text = "${permit.workers.size} workers signed in"
-            // You can add a horizontal recycler view for workers here
         } else {
             binding.workersSection.gone()
         }
@@ -184,9 +184,11 @@ class PermitDetailsFragment : Fragment() {
             PermitStatus.APPROVED -> {
                 binding.activeActions.visible()
                 binding.btnStartWork.setOnClickListener {
-                    // Navigate to worker sign in
-                    val action = PermitDetailsFragmentDirections
-                        .actionPermitDetailsFragmentToWorkerSignInFragment(permit.id)
+                    // Navigate to worker sign in - auto-generated
+                    val action =
+                        PermitDetailsFragmentDirections.actionPermitDetailsFragmentToWorkerSignInFragment(
+                            permit.id
+                        )
                     findNavController().navigate(action)
                 }
             }
@@ -195,14 +197,18 @@ class PermitDetailsFragment : Fragment() {
                 binding.activeActions.visible()
                 binding.btnStartWork.text = "Sign Out Worker"
                 binding.btnStartWork.setOnClickListener {
-                    val action = PermitDetailsFragmentDirections
-                        .actionPermitDetailsFragmentToWorkerSignOutFragment(permit.id)
+                    val action =
+                        PermitDetailsFragmentDirections.actionPermitDetailsFragmentToWorkerSignOutFragment(
+                            permit.id
+                        )
                     findNavController().navigate(action)
                 }
                 binding.btnClosePermit.visible()
                 binding.btnClosePermit.setOnClickListener {
-                    val action = PermitDetailsFragmentDirections
-                        .actionPermitDetailsFragmentToPermitClosureFragment(permit.id)
+                    val action =
+                        PermitDetailsFragmentDirections.actionPermitDetailsFragmentToPermitClosureFragment(
+                            permit.id
+                        )
                     findNavController().navigate(action)
                 }
             }
@@ -214,8 +220,10 @@ class PermitDetailsFragment : Fragment() {
         }
 
         binding.btnAddAttachment.setOnClickListener {
-            val action = PermitDetailsFragmentDirections
-                .actionPermitDetailsFragmentToUploadAttachmentFragment(permit.id)
+            val action =
+                PermitDetailsFragmentDirections.actionPermitDetailsFragmentToUploadAttachmentFragment(
+                    permit.id
+                )
             findNavController().navigate(action)
         }
     }
@@ -258,7 +266,6 @@ class PermitDetailsFragment : Fragment() {
     }
 
     private fun showAttachmentPreview(filePath: String) {
-        // Implement attachment preview (image/pdf viewer)
         MaterialAlertDialogBuilder(requireContext())
             .setTitle("Attachment Preview")
             .setMessage("Preview not implemented in demo")
@@ -275,5 +282,11 @@ class PermitDetailsFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
+    }
+
+    private fun setupToolbar() {
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().popBackStack()
+        }
     }
 }

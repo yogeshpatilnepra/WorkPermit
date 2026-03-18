@@ -20,6 +20,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+
 @AndroidEntryPoint
 class ActivePermitsFragment : Fragment() {
 
@@ -51,10 +52,8 @@ class ActivePermitsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         permitAdapter = PermitAdapter { permitId ->
-            val action =
-                ActivePermitsFragmentDirections.actionActivePermitsFragmentToPermitDetailsFragment(
-                    permitId
-                )
+            // Use action with argument - auto-generated
+            val action = ActivePermitsFragmentDirections.actionActivePermitsFragmentToPermitDetailsFragment(permitId)
             findNavController().navigate(action)
         }
 
@@ -62,9 +61,6 @@ class ActivePermitsFragment : Fragment() {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = permitAdapter
         }
-
-        // Hide FAB for this fragment
-        binding.fabAdd.hide()
     }
 
     private fun setupObservers() {
@@ -76,7 +72,6 @@ class ActivePermitsFragment : Fragment() {
                         binding.rvPermits.gone()
                         binding.tvEmpty.gone()
                     }
-
                     is Resource.Success -> {
                         binding.progressBar.gone()
                         if (resource.data.isNullOrEmpty()) {
@@ -89,14 +84,12 @@ class ActivePermitsFragment : Fragment() {
                             permitAdapter.submitList(resource.data)
                         }
                     }
-
                     is Resource.Error -> {
                         binding.progressBar.gone()
                         binding.rvPermits.gone()
                         binding.tvEmpty.visible()
                         binding.root.showSnackbar(resource.message ?: "Error loading permits")
                     }
-
                     else -> {}
                 }
             }

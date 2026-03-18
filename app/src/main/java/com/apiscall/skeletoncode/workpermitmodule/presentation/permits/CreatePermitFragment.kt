@@ -23,7 +23,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Locale
 
 @AndroidEntryPoint
 class CreatePermitFragment : Fragment() {
@@ -57,37 +58,80 @@ class CreatePermitFragment : Fragment() {
     private fun setupSpinners() {
         // Permit Type Spinner
         val permitTypes = PermitType.values().map {
-            it.name.replace("_", " ").lowercase().replaceFirstChar { char -> char.uppercase() }
+            when (it) {
+                PermitType.HOT_WORK -> "Hot Work"
+                PermitType.COLD_WORK -> "Cold Work"
+                PermitType.LOTO -> "LOTO"
+                PermitType.CONFINED_SPACE -> "Confined Space"
+                PermitType.WORK_AT_HEIGHT -> "Work at Height"
+                PermitType.LIFTING -> "Lifting"
+                PermitType.LIVE_EQUIPMENT -> "Live Equipment"
+            }
         }
+
         val typeAdapter =
             ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, permitTypes)
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerPermitType.setAdapter(typeAdapter)
 
-        binding.spinnerPermitType.setOnItemClickListener { _, _, position, _ ->
-            viewModel.setPermitType(PermitType.values()[position])
-        }
+        binding.spinnerPermitType.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: android.widget.AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    val selectedType = when (position) {
+                        0 -> PermitType.HOT_WORK
+                        1 -> PermitType.COLD_WORK
+                        2 -> PermitType.LOTO
+                        3 -> PermitType.CONFINED_SPACE
+                        4 -> PermitType.WORK_AT_HEIGHT
+                        5 -> PermitType.LIFTING
+                        6 -> PermitType.LIVE_EQUIPMENT
+                        else -> PermitType.HOT_WORK
+                    }
+                    viewModel.setPermitType(selectedType)
+                }
+
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            }
 
         // Location Spinner
         val locations = listOf(
-            "Reactor Area - Unit A", "Tank Farm - Tank T-205",
-            "Pipe Rack PR-200", "Compressor Station C-101", "Boiler House"
+            "Reactor Area - Unit A",
+            "Tank Farm - Tank T-205",
+            "Pipe Rack PR-200",
+            "Compressor Station C-101",
+            "Boiler House",
+            "Cooling Tower Area",
+            "Administration Building"
         )
+
         val locationAdapter =
             ArrayAdapter(requireContext(), android.R.layout.simple_spinner_item, locations)
         locationAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         binding.spinnerLocation.setAdapter(locationAdapter)
 
-        binding.spinnerLocation.setOnItemClickListener { _, _, position, _ ->
-            viewModel.setLocation(locations[position])
-        }
+        binding.spinnerLocation.onItemSelectedListener =
+            object : android.widget.AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: android.widget.AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
+                    viewModel.setLocation(locations[position])
+                }
+
+                override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            }
     }
 
     private fun setupDatePickers() {
         binding.layoutStartDate.setOnClickListener {
             showDatePicker { timestamp ->
-                viewModel.setStartDate(timestamp)
-                binding.tvStartDate.text = dateFormat.format(Date(timestamp))
                 showTimePicker { hour, minute ->
                     val calendar = Calendar.getInstance().apply {
                         timeInMillis = timestamp
@@ -103,8 +147,6 @@ class CreatePermitFragment : Fragment() {
 
         binding.layoutEndDate.setOnClickListener {
             showDatePicker { timestamp ->
-                viewModel.setEndDate(timestamp)
-                binding.tvEndDate.text = dateFormat.format(Date(timestamp))
                 showTimePicker { hour, minute ->
                     val calendar = Calendar.getInstance().apply {
                         timeInMillis = timestamp
@@ -122,6 +164,7 @@ class CreatePermitFragment : Fragment() {
     private fun showDatePicker(onDateSelected: (Long) -> Unit) {
         val datePicker = MaterialDatePicker.Builder.datePicker()
             .setTitleText("Select Date")
+            .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
             .build()
 
         datePicker.addOnPositiveButtonClickListener { selection ->
@@ -132,9 +175,12 @@ class CreatePermitFragment : Fragment() {
     }
 
     private fun showTimePicker(onTimeSelected: (Int, Int) -> Unit) {
+        val calendar = Calendar.getInstance()
         val timePicker = MaterialTimePicker.Builder()
             .setTimeFormat(TimeFormat.CLOCK_24H)
             .setTitleText("Select Time")
+            .setHour(calendar.get(Calendar.HOUR_OF_DAY))
+            .setMinute(calendar.get(Calendar.MINUTE))
             .build()
 
         timePicker.addOnPositiveButtonClickListener {
@@ -150,13 +196,16 @@ class CreatePermitFragment : Fragment() {
                 when (resource) {
                     is Resource.Loading -> {
                         binding.btnNext.isEnabled = false
+                        binding.btnSaveDraft.isEnabled = false
                         binding.progressBar.visible()
                     }
 
                     is Resource.Success -> {
                         binding.btnNext.isEnabled = true
+                        binding.btnSaveDraft.isEnabled = true
                         binding.progressBar.gone()
                         resource.data?.let { permit ->
+                            // Navigate to dynamic form with permit type
                             val action = CreatePermitFragmentDirections
                                 .actionCreatePermitFragmentToDynamicFormFragment(permit.permitType)
                             findNavController().navigate(action)
@@ -165,6 +214,7 @@ class CreatePermitFragment : Fragment() {
 
                     is Resource.Error -> {
                         binding.btnNext.isEnabled = true
+                        binding.btnSaveDraft.isEnabled = true
                         binding.progressBar.gone()
                         binding.root.showSnackbar(resource.message ?: "Error creating permit")
                     }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
@@ -24,6 +25,52 @@
 
         </com.google.android.material.appbar.AppBarLayout>
 
+        <!-- Progress Bar (shown during loading) -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <!-- Error Layout (shown on error) -->
+        <LinearLayout
+            android:id="@+id/errorLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="32dp"
+            android:visibility="gone"
+            app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+            <ImageView
+                android:layout_width="120dp"
+                android:layout_height="120dp"
+                android:src="@drawable/ic_error"
+                app:tint="@color/safety_red" />
+
+            <TextView
+                android:id="@+id/tvError"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Failed to load form"
+                android:textAlignment="center"
+                android:textColor="@color/text_secondary"
+                android:textSize="16sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="Retry" />
+
+        </LinearLayout>
+
+        <!-- Main Content (shown on success) -->
         <androidx.core.widget.NestedScrollView
             android:id="@+id/scrollView"
             android:layout_width="match_parent"
@@ -36,20 +83,14 @@
                 android:layout_height="wrap_content"
                 android:padding="16dp">
 
-                <ProgressBar
-                    android:id="@+id/dProgressBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:visibility="gone"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toTopOf="parent" />
-
                 <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardForm"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     app:cardCornerRadius="12dp"
                     app:cardElevation="2dp"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent">
 
                     <LinearLayout
@@ -62,40 +103,40 @@
                 </com.google.android.material.card.MaterialCardView>
 
                 <LinearLayout
+                    android:id="@+id/buttonContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="24dp"
                     android:orientation="horizontal"
-                    app:layout_constraintTop_toBottomOf="@id/progressBar">
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toBottomOf="@id/cardForm">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnSaveDraft"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
+                        android:layout_height="56dp"
                         android:layout_weight="1"
-                        android:text="Save Draft" />
+                        android:layout_marginEnd="8dp"
+                        android:text="Save Draft"
+                        android:textAllCaps="false"
+                        android:textSize="16sp"
+                        style="@style/Widget.Material3.Button.OutlinedButton" />
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btnSubmit"
                         android:layout_width="0dp"
-                        android:layout_height="wrap_content"
+                        android:layout_height="56dp"
                         android:layout_weight="1"
-                        android:text="Submit" />
+                        android:text="Submit"
+                        android:textAllCaps="false"
+                        android:textSize="16sp" />
 
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
 
         </androidx.core.widget.NestedScrollView>
-
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="visible" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

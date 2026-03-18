@@ -1,7 +1,9 @@
 package com.apiscall.skeletoncode.workpermitmodule.domain.models
 
 import android.os.Parcelable
+import com.apiscall.skeletoncode.workpermitmodule.utils.MapParceler
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.TypeParceler
 import java.util.Date
 
 @Parcelize
@@ -21,7 +23,7 @@ data class Permit(
     val endDate: Date,
     val createdAt: Date,
     val updatedAt: Date,
-    val formData: Map<String, Any>,
+    val formData: String, // Changed from Map<String, Any> to String
     val attachments: List<Attachment> = emptyList(),
     val approvalHistory: List<ApprovalHistory> = emptyList(),
     val workers: List<User> = emptyList(),

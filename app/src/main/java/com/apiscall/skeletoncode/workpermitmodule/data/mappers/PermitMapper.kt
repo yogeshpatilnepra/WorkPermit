@@ -12,6 +12,7 @@ import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
+import com.apiscall.skeletoncode.workpermitmodule.utils.FormDataConverter
 import com.google.gson.Gson
 import java.util.Date
 import javax.inject.Inject
@@ -41,7 +42,7 @@ class PermitMapper @Inject constructor(
             endDate = Date(dto.endDate),
             createdAt = Date(dto.createdAt),
             updatedAt = Date(dto.updatedAt),
-            formData = dto.formData,
+            formData = dto.formData.toString(),
             attachments = dto.attachments.map { mapAttachmentToDomain(it, users) },
             approvalHistory = dto.approvalHistory.map { mapApprovalHistoryToDomain(it, users) },
             workers = dto.workers.mapNotNull { users[it] },
@@ -101,7 +102,7 @@ class PermitMapper @Inject constructor(
             endDate = permit.endDate.time,
             createdAt = permit.createdAt.time,
             updatedAt = permit.updatedAt.time,
-            formData = permit.formData,
+            formData = FormDataConverter.toMap(permit.formData), // Convert String back to Map for DTO
             attachments = permit.attachments.map { mapAttachmentToDto(it) },
             approvalHistory = permit.approvalHistory.map { mapApprovalHistoryToDto(it) },
             workers = permit.workers.map { it.id },
@@ -111,6 +112,7 @@ class PermitMapper @Inject constructor(
             isDraft = permit.isDraft
         )
     }
+
 
     private fun mapAttachmentToDomain(dto: AttachmentDto, users: Map<String, User>): Attachment {
         return Attachment(

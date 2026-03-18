@@ -14,11 +14,13 @@ import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
-import java.util.*
+import java.util.Calendar
+import java.util.Date
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
-import kotlin.collections.toMutableList
 
 @Singleton
 class PermitRepositoryImpl @Inject constructor(
@@ -272,7 +274,10 @@ class PermitRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun addAttachment(permitId: String, attachment: Attachment): Result<Attachment> {
+    override suspend fun addAttachment(
+        permitId: String,
+        attachment: Attachment
+    ): Result<Attachment> {
         return try {
             val permit = mockDataSource.getPermitById(permitId)
                 ?: return Result.failure(Exception("Permit not found"))
@@ -293,8 +298,12 @@ class PermitRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getPermitForm(permitType: PermitType): Flow<List<FormField>> = flow {
-        delay(200)
-        emit(mockDataSource.getPermitForm(permitType))
+        delay(500) // Simulate network
+        val forms = mockDataSource.getPermitForm(permitType)
+        emit(forms)
+    }.catch { e ->
+        // Log error and emit empty list to avoid crash
+        emit(emptyList())
     }
 
     override suspend fun searchPermits(query: String): Flow<List<Permit>> = flow {

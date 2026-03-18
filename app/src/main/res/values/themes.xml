@@ -1,6 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Base application theme. -->
-    <style name="Base.Theme.SkeletonApicallCode" parent="Theme.MaterialComponents.Light.DarkActionBar">
+    <!-- Base application theme - Force Light theme always -->
+    <style name="Base.Theme.SkeletonApicallCode" parent="Theme.Material3.Light.NoActionBar">
         <item name="colorPrimary">@color/safety_blue</item>
         <item name="colorPrimaryVariant">@color/safety_blue_dark</item>
         <item name="colorOnPrimary">@android:color/white</item>
@@ -22,10 +22,12 @@
         <item name="materialButtonStyle">@style/Widget.PTWDemo.Button</item>
         <item name="materialCardViewStyle">@style/Widget.PTWDemo.CardView</item>
         <item name="chipStyle">@style/Widget.PTWDemo.Chip</item>
+        <item name="android:windowOptOutEdgeToEdgeEnforcement" tools:targetApi="35">true</item>
     </style>
 
     <style name="Theme.SkeletonApicallCode" parent="Base.Theme.SkeletonApicallCode" />
 
+    <!-- Rest of your styles remain the same -->
     <style name="llVerticalMatchWrap">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
@@ -95,7 +97,6 @@
         <item name="android:orientation">vertical</item>
     </style>
 
-
     <style name="TransparentBackground" parent="Theme.AppCompat.Dialog">
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
@@ -129,6 +130,7 @@
         <item name="cardCornerRadius">12dp</item>
         <item name="cardElevation">2dp</item>
     </style>
+
     <style name="Widget.PTWDemo.Chip" parent="Widget.MaterialComponents.Chip.Action">
         <item name="chipCornerRadius">16dp</item>
         <item name="android:textSize">12sp</item>
@@ -137,6 +139,7 @@
         <item name="chipStrokeWidth">0dp</item>
         <item name="chipMinHeight">32dp</item>
     </style>
+
     <!-- Status Chip Styles -->
     <style name="ChipStatus" parent="Widget.MaterialComponents.Chip.Action">
         <item name="chipCornerRadius">16dp</item>
@@ -149,30 +152,43 @@
 
     <style name="ChipStatus.Draft">
         <item name="chipBackgroundColor">@color/status_draft</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="ChipStatus.Pending">
         <item name="chipBackgroundColor">@color/status_pending</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="ChipStatus.Approved">
         <item name="chipBackgroundColor">@color/status_approved</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="ChipStatus.Active">
         <item name="chipBackgroundColor">@color/status_active</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="ChipStatus.Rejected">
         <item name="chipBackgroundColor">@color/status_rejected</item>
-        <item name="android:textColor">@android:color/white</item>
     </style>
 
     <style name="ChipStatus.Closed">
         <item name="chipBackgroundColor">@color/status_closed</item>
+    </style>
+
+    <style name="Theme.AppCompat.Transparent" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+    </style>
+    <style name="Theme.FileViewer" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="android:windowBackground">@android:color/black</item>
+        <item name="colorPrimary">@android:color/black</item>
+        <item name="colorPrimaryDark">@android:color/black</item>
+        <item name="android:statusBarColor">@android:color/black</item>
+        <item name="android:navigationBarColor">@android:color/black</item>
+        <item name="android:windowLightStatusBar">false</item>
     </style>
 </resources>

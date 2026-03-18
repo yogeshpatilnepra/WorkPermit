@@ -25,10 +25,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.ActionBar
 import androidx.appcompat.app.AppCompatDelegate
-import com.apiscall.skeletoncode.solarproject.APIS.APIComponent
-import com.apiscall.skeletoncode.APIS.DaggerAPIComponent
-import com.apiscall.skeletoncode.solarproject.APIS.Repository
 import com.apiscall.skeletoncode.R
+import com.apiscall.skeletoncode.solarproject.APIS.APIComponent
+import com.apiscall.skeletoncode.solarproject.APIS.DaggerAPIComponent
+import com.apiscall.skeletoncode.solarproject.APIS.Repository
 import com.apiscall.skeletoncode.solarproject.constants.AppConstant
 import com.apiscall.skeletoncode.solarproject.videocropping.OnVideoTrimListener
 import com.devs.readmoreoption.ReadMoreOption

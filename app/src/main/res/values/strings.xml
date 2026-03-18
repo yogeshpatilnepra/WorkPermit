@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">SkeletonApicallCode</string>
+    <string name="app_name">Work Permit Demo</string>
     <string name="application_update">Application Update !!!</string>
     <string name="app_update_hint">We have enhance the application and added some new and exiting features</string>
     <string name="current_version">Current Version</string>

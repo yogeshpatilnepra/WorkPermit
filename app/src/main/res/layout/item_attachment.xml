@@ -3,19 +3,18 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.google.android.material.card.MaterialCardView
-        android:layout_width="120dp"
-        android:layout_height="120dp"
-        android:layout_marginEnd="8dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         app:cardCornerRadius="8dp"
-        app:cardElevation="2dp"
+        app:cardElevation="1dp"
         app:rippleColor="@color/safety_blue_light">
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center"
-            android:orientation="vertical"
-            android:padding="8dp">
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="12dp">
 
             <ImageView
                 android:id="@+id/ivFileIcon"
@@ -24,26 +23,60 @@
                 android:src="@drawable/ic_file"
                 app:tint="@color/safety_blue" />
 
-            <TextView
-                android:id="@+id/tvFileName"
-                android:layout_width="match_parent"
+            <LinearLayout
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="2"
-                android:text="document.pdf"
-                android:textColor="@color/text_primary"
-                android:textSize="12sp" />
+                android:layout_marginStart="12dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/tvFileSize"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="2.5 MB"
-                android:textColor="@color/text_secondary"
-                android:textSize="10sp" />
+                <TextView
+                    android:id="@+id/tvFileName"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="document.pdf"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvFileSize"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="2.5 MB"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
+
+                <TextView
+                    android:id="@+id/tvUploadedBy"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:text="Uploaded by: John Doe"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp" />
+
+                <TextView
+                    android:id="@+id/tvUploadedAt"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="12 Mar 2024 14:30"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_gravity="center_vertical"
+                android:src="@drawable/ic_chevron_right"
+                app:tint="@color/text_hint" />
 
         </LinearLayout>
 

@@ -1,5 +1,6 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.permits
 
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -32,6 +33,8 @@ import com.google.android.material.textfield.TextInputLayout
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 @AndroidEntryPoint
@@ -57,10 +60,17 @@ class DynamicFormFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        setupToolbar()
         setupObservers()
         setupListeners()
 
         viewModel.loadFormFields(args.permitType)
+    }
+
+    private fun setupToolbar() {
+        binding.toolbar.setNavigationOnClickListener {
+            findNavController().navigateUp()
+        }
     }
 
     private fun setupObservers() {
@@ -68,21 +78,29 @@ class DynamicFormFragment : Fragment() {
             viewModel.formFields.collectLatest { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        binding.dProgressBar.visible()
+                        binding.progressBar.visible()
                         binding.scrollView.gone()
+                        binding.errorLayout.gone()
                     }
 
                     is Resource.Success -> {
-                        binding.dProgressBar.gone()
-                        binding.scrollView.visible()
-                        resource.data?.let { fields ->
-                            buildForm(fields)
+                        binding.progressBar.gone()
+                        if (resource.data.isNullOrEmpty()) {
+                            binding.errorLayout.visible()
+                            binding.tvError.text = "No form fields available for this permit type."
+                            binding.scrollView.gone()
+                        } else {
+                            binding.errorLayout.gone()
+                            buildForm(resource.data)
+                            binding.scrollView.visible()
                         }
                     }
 
                     is Resource.Error -> {
-                        binding.dProgressBar.gone()
-                        binding.root.showSnackbar(resource.message ?: "Error loading form")
+                        binding.progressBar.gone()
+                        binding.errorLayout.visible()
+                        binding.tvError.text = resource.message ?: "Failed to load form"
+                        binding.scrollView.gone()
                     }
 
                     else -> {}
@@ -95,17 +113,20 @@ class DynamicFormFragment : Fragment() {
                 when (resource) {
                     is Resource.Loading -> {
                         binding.btnSubmit.isEnabled = false
+                        binding.btnSaveDraft.isEnabled = false
                     }
 
                     is Resource.Success -> {
                         binding.btnSubmit.isEnabled = true
+                        binding.btnSaveDraft.isEnabled = true
                         binding.root.showSnackbar("Permit submitted successfully")
                         findNavController().popBackStack(R.id.homeFragment, false)
                     }
 
                     is Resource.Error -> {
                         binding.btnSubmit.isEnabled = true
-                        binding.root.showSnackbar(resource.message ?: "Error submitting form")
+                        binding.btnSaveDraft.isEnabled = true
+                        binding.root.showSnackbar(resource.message ?: "Submission failed")
                     }
 
                     else -> {}
@@ -116,29 +137,28 @@ class DynamicFormFragment : Fragment() {
 
     private fun buildForm(fields: List<FormField>) {
         binding.formContainer.removeAllViews()
+        fieldViews.clear()
 
         fields.sortedBy { it.order }.forEach { field ->
             val view = createFieldView(field)
             binding.formContainer.addView(view)
             fieldViews[field.id] = view
 
-            // Add margin
-            val params = view.layoutParams as ViewGroup.MarginLayoutParams
-            params.setMargins(0, 0, 0, 16)
+            // Add bottom margin
+            val params = view.layoutParams as? ViewGroup.MarginLayoutParams
+            params?.setMargins(0, 0, 0, 16)
             view.layoutParams = params
         }
     }
 
-    private fun createFieldView(field: FormField): View {
-        return when (field.type) {
-            FieldType.TEXT, FieldType.NUMBER -> createTextField(field)
-            FieldType.TEXTAREA -> createTextAreaField(field)
-            FieldType.DROPDOWN -> createDropdownField(field)
-            FieldType.CHECKBOX -> createCheckboxField(field)
-            FieldType.RADIO -> createRadioGroupField(field)
-            FieldType.DATE, FieldType.TIME -> createDateTimeField(field)
-            else -> createTextField(field) // Default to text field
-        }
+    private fun createFieldView(field: FormField): View = when (field.type) {
+        FieldType.TEXT, FieldType.NUMBER -> createTextField(field)
+        FieldType.TEXTAREA -> createTextAreaField(field)
+        FieldType.DROPDOWN -> createDropdownField(field)
+        FieldType.CHECKBOX -> createCheckboxField(field)
+        FieldType.RADIO -> createRadioGroupField(field)
+        FieldType.DATE, FieldType.TIME -> createDateTimeField(field)
+        else -> createTextField(field)
     }
 
     private fun createTextField(field: FormField): View {
@@ -147,7 +167,7 @@ class DynamicFormFragment : Fragment() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            hint = field.label
+            hint = if (field.isRequired) "${field.label} *" else field.label
             isHintEnabled = true
             if (field.type == FieldType.NUMBER) {
                 endIconMode = TextInputLayout.END_ICON_CLEAR_TEXT
@@ -177,7 +197,7 @@ class DynamicFormFragment : Fragment() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            hint = field.label
+            hint = if (field.isRequired) "${field.label} *" else field.label
             isHintEnabled = true
         }
 
@@ -208,7 +228,7 @@ class DynamicFormFragment : Fragment() {
         }
 
         val textView = TextView(requireContext()).apply {
-            text = field.label
+            text = if (field.isRequired) "${field.label} *" else field.label
             textSize = 14f
             setTextColor(resources.getColor(R.color.text_primary, null))
         }
@@ -263,7 +283,7 @@ class DynamicFormFragment : Fragment() {
         }
 
         val textView = TextView(requireContext()).apply {
-            text = field.label
+            text = if (field.isRequired) "${field.label} *" else field.label
             textSize = 14f
             setTextColor(resources.getColor(R.color.text_primary, null))
         }
@@ -281,7 +301,7 @@ class DynamicFormFragment : Fragment() {
             radioGroup.addView(radioButton)
         }
 
-        radioGroup.setOnCheckedChangeListener { group, checkedId ->
+        radioGroup.setOnCheckedChangeListener { _, checkedId ->
             val selectedOption = field.options[checkedId]
             viewModel.updateFieldValue(field.id, selectedOption)
         }
@@ -296,9 +316,10 @@ class DynamicFormFragment : Fragment() {
                 ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
-            hint = field.label
+            hint = if (field.isRequired) "${field.label} *" else field.label
             isHintEnabled = true
             endIconMode = TextInputLayout.END_ICON_CUSTOM
+            setEndIconDrawable(android.R.drawable.ic_menu_today)
         }
 
         val editText = TextInputEditText(requireContext()).apply {
@@ -307,7 +328,6 @@ class DynamicFormFragment : Fragment() {
             hint = field.placeholder
 
             setOnClickListener {
-                // Show date/time picker
                 showDateTimePicker(field.type) { dateTime ->
                     setText(dateTime)
                     viewModel.updateFieldValue(field.id, dateTime)
@@ -320,20 +340,21 @@ class DynamicFormFragment : Fragment() {
     }
 
     private fun showDateTimePicker(type: FieldType, onSelected: (String) -> Unit) {
-        // Implement date/time picker
         if (type == FieldType.DATE) {
             val datePicker =
                 com.google.android.material.datepicker.MaterialDatePicker.Builder.datePicker()
+                    .setTitleText("Select Date")
                     .build()
             datePicker.addOnPositiveButtonClickListener { selection ->
-                val date = java.text.SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-                    .format(java.util.Date(selection))
+                val date = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+                    .format(Date(selection))
                 onSelected(date)
             }
             datePicker.show(parentFragmentManager, "DATE_PICKER")
         } else {
             val timePicker = com.google.android.material.timepicker.MaterialTimePicker.Builder()
                 .setTimeFormat(com.google.android.material.timepicker.TimeFormat.CLOCK_24H)
+                .setTitleText("Select Time")
                 .build()
             timePicker.addOnPositiveButtonClickListener {
                 val time = String.format(
@@ -347,12 +368,13 @@ class DynamicFormFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigateUp()
-        }
-
         binding.btnSaveDraft.setOnClickListener {
-            viewModel.saveDraft()
+            if (viewModel.validateForm()) {
+                viewModel.saveDraft()
+                binding.root.showSnackbar("Draft saved")
+            } else {
+                binding.root.showSnackbar("Please fill all required fields")
+            }
         }
 
         binding.btnSubmit.setOnClickListener {
@@ -361,6 +383,10 @@ class DynamicFormFragment : Fragment() {
             } else {
                 binding.root.showSnackbar("Please fill all required fields")
             }
+        }
+
+        binding.btnRetry.setOnClickListener {
+            viewModel.loadFormFields(args.permitType)
         }
     }
 

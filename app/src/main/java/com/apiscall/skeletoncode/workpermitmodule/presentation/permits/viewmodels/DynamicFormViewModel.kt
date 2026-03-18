@@ -6,13 +6,16 @@ import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.FormField
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.PermitRepository
+import com.apiscall.skeletoncode.workpermitmodule.utils.FormDataConverter
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+
 
 @HiltViewModel
 class DynamicFormViewModel @Inject constructor(
@@ -31,10 +34,18 @@ class DynamicFormViewModel @Inject constructor(
     fun loadFormFields(permitType: PermitType) {
         viewModelScope.launch {
             _formFields.value = Resource.Loading
-            permitRepository.getPermitForm(permitType).collect { fields ->
-                _formFields.value = Resource.Success(fields)
-                requiredFields.clear()
-                requiredFields.addAll(fields.filter { it.isRequired }.map { it.id })
+            try {
+                permitRepository.getPermitForm(permitType)
+                    .catch { e ->
+                        _formFields.value = Resource.Error(e.message ?: "Error loading form")
+                    }
+                    .collect { fields ->
+                        _formFields.value = Resource.Success(fields)
+                        requiredFields.clear()
+                        requiredFields.addAll(fields.filter { it.isRequired }.map { it.id })
+                    }
+            } catch (e: Exception) {
+                _formFields.value = Resource.Error(e.message ?: "Error loading form")
             }
         }
     }
@@ -43,23 +54,23 @@ class DynamicFormViewModel @Inject constructor(
         fieldValues[fieldId] = value
     }
 
-    fun validateForm(): Boolean {
-        return requiredFields.all { fieldId ->
-            !fieldValues[fieldId].isNullOrBlank()
-        }
-    }
+    fun getFormDataAsJson(): String = FormDataConverter.fromMap(fieldValues)
+
+    fun validateForm(): Boolean = requiredFields.all { !fieldValues[it].isNullOrBlank() }
 
     fun saveDraft() {
-        // In a real app, save to local database
         _submitResult.value = Resource.Success(true)
     }
 
     fun submitForm() {
         viewModelScope.launch {
             _submitResult.value = Resource.Loading
-            // Simulate API call
-            kotlinx.coroutines.delay(1000)
-            _submitResult.value = Resource.Success(true)
+            try {
+                kotlinx.coroutines.delay(1000) // Simulate API call
+                _submitResult.value = Resource.Success(true)
+            } catch (e: Exception) {
+                _submitResult.value = Resource.Error(e.message ?: "Submission failed")
+            }
         }
     }
 }

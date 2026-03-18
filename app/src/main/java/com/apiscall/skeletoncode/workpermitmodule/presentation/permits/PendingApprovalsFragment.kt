@@ -64,7 +64,7 @@ class PendingApprovalsFragment : Fragment() {
         }
 
         // Hide FAB for this fragment
-        binding.fabAdd.hide()
+        binding.btnFabAdd.hide()
     }
 
     private fun setupObservers() {

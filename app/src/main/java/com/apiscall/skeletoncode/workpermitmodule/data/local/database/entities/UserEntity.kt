@@ -11,7 +11,7 @@ data class UserEntity(
     val username: String,
     val email: String,
     val fullName: String,
-    val role: Role,
+    val role: String,
     val department: String,
     val employeeId: String,
     val profileImageUrl: String?,

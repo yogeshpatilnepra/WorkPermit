@@ -69,9 +69,9 @@ class HomeFragment : Fragment() {
                     findNavController().navigate(R.id.action_homeFragment_to_createPermitFragment)
                 }
 
-                QuickAction.SCAN_QR -> {
-                    findNavController().navigate(R.id.action_homeFragment_to_qrScanFragment)
-                }
+//                QuickAction.SCAN_QR -> {
+//                    findNavController().navigate(R.id.action_homeFragment_to_qrScanFragment)
+//                }
 
                 QuickAction.SEARCH -> {
                     findNavController().navigate(R.id.action_homeFragment_to_searchFilterFragment)
@@ -119,30 +119,32 @@ class HomeFragment : Fragment() {
 
                     is Resource.Success -> {
                         binding.progressBar.gone()
-                        statAdapter.submitList(resource.data?.let {
-                            listOf(
-                                StatCard(
-                                    "Total",
-                                    it.totalPermits.toString(),
-                                    R.drawable.ic_total_permits
-                                ),
-                                StatCard(
-                                    "Pending",
-                                    it.pendingApprovals.toString(),
-                                    R.drawable.ic_pending
-                                ),
-                                StatCard(
-                                    "Active",
-                                    it.activePermits.toString(),
-                                    R.drawable.ic_active
-                                ),
-                                StatCard(
-                                    "Expiring",
-                                    it.expiringToday.toString(),
-                                    R.drawable.ic_warning
+                        resource.data?.let { stats ->
+                            statAdapter.submitList(
+                                listOf(
+                                    StatCard(
+                                        "Total",
+                                        stats.totalPermits.toString(),
+                                        R.drawable.ic_permits
+                                    ),
+                                    StatCard(
+                                        "Pending",
+                                        stats.pendingApprovals.toString(),
+                                        R.drawable.ic_pending
+                                    ),
+                                    StatCard(
+                                        "Active",
+                                        stats.activePermits.toString(),
+                                        R.drawable.ic_active
+                                    ),
+                                    StatCard(
+                                        "Expiring",
+                                        stats.expiringToday.toString(),
+                                        R.drawable.ic_warning
+                                    )
                                 )
                             )
-                        })
+                        }
                     }
 
                     is Resource.Error -> {

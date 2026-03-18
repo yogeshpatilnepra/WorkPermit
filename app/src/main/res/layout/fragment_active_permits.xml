@@ -97,7 +97,9 @@
             android:layout_gravity="bottom|end"
             android:layout_margin="16dp"
             android:src="@drawable/ic_add"
-            app:backgroundTint="@color/safety_blue" />
+            app:backgroundTint="@color/safety_blue"
+            app:maxImageSize="26dp"
+            app:tint="@android:color/white" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </layout>

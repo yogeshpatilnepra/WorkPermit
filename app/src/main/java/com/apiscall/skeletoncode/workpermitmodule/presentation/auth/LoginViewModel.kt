@@ -42,7 +42,7 @@ class LoginViewModel @Inject constructor(
 
     fun login() {
         if (!validateInputs()) {
-            _loginState.value = Resource.Error("Please fill in all fields")
+            _loginState.value = Resource.Error("Please enter username and password")
             return
         }
 
@@ -53,7 +53,7 @@ class LoginViewModel @Inject constructor(
             _loginState.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Login failed")
+                Resource.Error(result.exceptionOrNull()?.message ?: "Login failed. Invalid credentials.")
             }
         }
     }

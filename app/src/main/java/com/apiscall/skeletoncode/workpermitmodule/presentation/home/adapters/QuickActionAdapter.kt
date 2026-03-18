@@ -8,8 +8,8 @@ import com.apiscall.skeletoncode.R
 import com.apiscall.skeletoncode.databinding.ItemQuickActionBinding
 
 enum class QuickAction(val title: String, val iconRes: Int) {
-    NEW_PERMIT("New Permit", R.drawable.ic_new_permit),
-    SCAN_QR("Scan QR", R.drawable.ic_qr_code),
+    NEW_PERMIT("New Permit", R.drawable.ic_add),
+//    SCAN_QR("Scan QR", R.drawable.ic_qr_code),
     SEARCH("Search", R.drawable.ic_search),
     SYNC("Sync", R.drawable.ic_sync)
 }
