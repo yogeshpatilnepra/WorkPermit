@@ -1,45 +1,36 @@
 package com.apiscall.skeletoncode.workpermitmodule.domain.models
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-import java.util.Date
 
+import android.os.Parcelable
+import com.google.firebase.Timestamp
+import kotlinx.parcelize.Parcelize
 
 @Parcelize
-data class Permit(
-    val id: String,
-    val permitNumber: String,
-    val permitType: PermitType,
-    val title: String,
-    val description: String,
-    val status: PermitStatus,
-    val requester: User,
-    val issuer: User? = null,
-    val areaOwner: User? = null,
-    val ehsOfficer: User? = null,
-    val location: String,
-    val plant: String? = null,
-    val department: String? = null,
-    val area: String? = null,
-    val company: String? = null,
-    val shift: String? = null,
+data class PermitModel(
+    val id: String = "",
+    val permitNumber: String = "",
+    val title: String = "",
+    val permitType: String = "",
+    val plant: String = "",
+    val department: String = "",
+    val area: String = "",
+    val company: String = "",
+    val shift: String = "",
     val workerCount: Int = 0,
-    val startDate: Date,
-    val endDate: Date,
-    val createdAt: Date,
-    val updatedAt: Date,
-    val formData: String,
-    val attachments: List<Attachment> = emptyList(),
-    val approvalHistory: List<ApprovalHistory> = emptyList(),
-    val workers: List<User> = emptyList(),
-    val remarks: String? = null,
-    val closureRemarks: String? = null,
-    val closedAt: Date? = null,
-    val isDraft: Boolean = false,
-    val riskAssessmentNo: String? = null,
-    val jsaNo: String? = null,
+    val workStart: Timestamp? = null,
+    val workEnd: Timestamp? = null,
+    val riskAssessmentNo: String = "",
+    val jsaNo: String = "",
+    val jobDescription: String = "",
     val toolboxTalkDone: Boolean = false,
     val ppeVerified: Boolean = false,
+    val status: String = "draft",
+    val requestorId: String = "",
+    val requestorName: String = "",
+    val requestorEmail: String = "",
+    val createdAt: Timestamp? = null,
+    val updatedAt: Timestamp? = null,
+    val plantCode: String = "",
 
     // Hot Work Checklist
     val gasTesting: Boolean = false,
@@ -93,25 +84,3 @@ data class Permit(
     val spillPrevention: Boolean = false,
     val housekeeping: Boolean = false
 ) : Parcelable
-
-enum class PermitStatus {
-    DRAFT,
-    PENDING_ISSUER_APPROVAL,
-    PENDING_AREA_OWNER_APPROVAL,
-    PENDING_EHS_APPROVAL,
-    APPROVED,
-    REJECTED,
-    ACTIVE,
-    CLOSED,
-    EXPIRED
-}
-
-enum class PermitType {
-    HOT_WORK,
-    COLD_WORK,
-    LOTO,
-    CONFINED_SPACE,
-    WORK_AT_HEIGHT,
-    LIFTING,
-    LIVE_EQUIPMENT
-}

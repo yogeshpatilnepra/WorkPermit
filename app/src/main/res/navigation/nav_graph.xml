@@ -49,10 +49,21 @@
             app:destination="@id/searchFilterFragment" />
         <action
             android:id="@+id/action_homeFragment_to_permitDetailsFragment"
-            app:popUpTo="@id/homeFragment"
-            app:destination="@id/permitDetailsFragment" />
+            app:destination="@id/permitDetailsFragment"
+            app:popUpTo="@id/homeFragment" />
     </fragment>
-
+    <fragment
+        android:id="@+id/permitsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.PermitsFragment"
+        android:label="Permits"
+        tools:layout="@layout/fragment_permits">
+        <action
+            android:id="@+id/action_permitsFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
+        <action
+            android:id="@+id/action_permitsFragment_to_createPermitFragment"
+            app:destination="@id/createPermitFragment" />
+    </fragment>
     <fragment
         android:id="@+id/myPermitsFragment"
         android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.MyPermitsFragment"

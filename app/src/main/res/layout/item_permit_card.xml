@@ -3,7 +3,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.google.android.material.card.MaterialCardView
-        android:id="@+id/cardPermit"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="12dp"
@@ -14,7 +13,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:padding="16dp">
+            android:padding="@dimen/_10sdp">
 
             <TextView
                 android:id="@+id/tvPermitNumber"
@@ -34,7 +33,7 @@
                 android:layout_marginStart="8dp"
                 android:background="@drawable/bg_permit_type"
                 android:paddingHorizontal="8dp"
-                android:paddingVertical="4dp"
+                android:paddingVertical="2dp"
                 android:text="Hot Work"
                 android:textColor="@android:color/white"
                 android:textSize="12sp"
@@ -47,6 +46,8 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
+                android:ellipsize="end"
+                android:maxLines="2"
                 android:text="Welding at Reactor Area"
                 android:textColor="@color/text_primary"
                 android:textSize="16sp"
@@ -56,18 +57,74 @@
                 app:layout_constraintTop_toBottomOf="@id/tvPermitNumber" />
 
             <TextView
+                android:id="@+id/tvPlant"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:drawablePadding="4dp"
+                android:text="Sulzer Pump Plant 1"
+                android:textColor="@color/text_secondary"
+                android:textSize="14sp"
+                app:drawableStartCompat="@drawable/ic_factory"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvPermitTitle" />
+
+            <TextView
                 android:id="@+id/tvLocation"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:drawablePadding="4dp"
-                android:text="Reactor Area - Unit A"
+                android:text="CNC Zone"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp"
                 app:drawableStartCompat="@drawable/ic_location"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/tvPermitTitle" />
+                app:layout_constraintTop_toBottomOf="@id/tvPlant" />
+
+            <TextView
+                android:id="@+id/tvRequestor"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:drawablePadding="4dp"
+                android:text="Requested by: John Doe"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/ic_person"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvLocation" />
+
+            <TextView
+                android:id="@+id/tvWorkStart"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:drawablePadding="4dp"
+                android:text="Start: 12 Mar 2024 08:00"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/ic_date_range"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvRequestor" />
+
+            <TextView
+                android:id="@+id/tvWorkEnd"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:drawablePadding="4dp"
+                android:text="End: 14 Mar 2024 17:00"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                app:drawableStartCompat="@drawable/ic_date_range"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tvWorkStart" />
 
             <View
                 android:id="@+id/divider"
@@ -75,7 +132,7 @@
                 android:layout_height="1dp"
                 android:layout_marginVertical="12dp"
                 android:background="@color/divider"
-                app:layout_constraintTop_toBottomOf="@id/tvLocation" />
+                app:layout_constraintTop_toBottomOf="@id/tvWorkEnd" />
 
             <TextView
                 android:id="@+id/tvStatus"
@@ -98,6 +155,7 @@
                 android:text="12 Mar 2024"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/divider" />

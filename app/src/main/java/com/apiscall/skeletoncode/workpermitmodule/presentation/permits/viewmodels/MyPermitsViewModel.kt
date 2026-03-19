@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
-import com.apiscall.skeletoncode.workpermitmodule.domain.repository.PermitRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,71 +19,67 @@ import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
-class PermitDetailViewModel @Inject constructor(
+class MyPermitsViewModel @Inject constructor(
     private val firebaseRepository: FirebaseRepository,
-    private val permitRepository: PermitRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _permitDetails = MutableStateFlow<Resource<Permit>>(Resource.Loading)
-    val permitDetails: StateFlow<Resource<Permit>> = _permitDetails.asStateFlow()
+    private val _permits = MutableStateFlow<Resource<List<Permit>>>(Resource.Loading)
+    val permits: StateFlow<Resource<List<Permit>>> = _permits.asStateFlow()
 
-    private val _actionResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
-    val actionResult: StateFlow<Resource<Boolean>> = _actionResult.asStateFlow()
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
-    fun loadPermitDetails(permitId: String) {
+    init {
+        loadCurrentUser()
+    }
+
+    private fun loadCurrentUser() {
         viewModelScope.launch {
-            _permitDetails.value = Resource.Loading
+            _currentUser.value = authRepository.getCurrentUser()
+        }
+    }
 
-            firebaseRepository.getPermitById(permitId).collect { permitModel ->
-                if (permitModel != null) {
-                    val permit = convertToPermit(permitModel)
-                    _permitDetails.value = Resource.Success(permit)
-                } else {
-                    _permitDetails.value = Resource.Error("Permit not found")
+    fun loadMyPermits() {
+        viewModelScope.launch {
+            _permits.value = Resource.Loading
+
+            val user = _currentUser.value
+            if (user == null) {
+                _permits.value = Resource.Error("User not logged in")
+                return@launch
+            }
+
+            // For EHS, Issuer, Area Owner - show all permits
+            // For Requestor, Supervisor, Admin - show only their permits
+            firebaseRepository.getPermitsFlow().collect { permitModels ->
+                val filteredPermits = when (user.role) {
+                    Role.EHS_OFFICER, Role.ISSUER, Role.AREA_OWNER -> {
+                        // These roles can see all permits
+                        permitModels
+                    }
+
+                    else -> {
+                        // Requestor, Supervisor, Admin - see only their permits
+                        permitModels.filter { it.requestorId == user.id }
+                    }
                 }
+
+                val permits = filteredPermits.map { convertToPermit(it) }
+                _permits.value = Resource.Success(permits)
             }
         }
     }
 
-    fun approvePermit(permitId: String, comments: String?) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            // Update status in Firebase
-            val result = firebaseRepository.updatePermitStatus(permitId, "approved", comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Approval failed")
-            }
+    fun canCreatePermit(): Boolean {
+        val user = _currentUser.value ?: return false
+        return when (user.role) {
+            Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> true
+            else -> false
         }
     }
 
-    fun rejectPermit(permitId: String, comments: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            val result = firebaseRepository.updatePermitStatus(permitId, "rejected", comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Rejection failed")
-            }
-        }
-    }
-
-    fun sendBackPermit(permitId: String, comments: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            val result = firebaseRepository.updatePermitStatus(permitId, "sent back", comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Action failed")
-            }
-        }
-    }
-
-    private fun convertToPermit(model: com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel): Permit {
+    private fun convertToPermit(model: PermitModel): Permit {
         val requester = User(
             id = model.requestorId,
             username = "",
@@ -118,6 +114,58 @@ class PermitDetailViewModel @Inject constructor(
             jsaNo = model.jsaNo,
             toolboxTalkDone = model.toolboxTalkDone,
             ppeVerified = model.ppeVerified,
+
+            // Hot Work Checklist
+            gasTesting = model.gasTesting,
+            fireWatch = model.fireWatch,
+            sparkShields = model.sparkShields,
+            combustiblesRemoved = model.combustiblesRemoved,
+            barricading = model.barricading,
+
+            // LOTO Checklist
+            isolationPoints = model.isolationPoints,
+            locksApplied = model.locksApplied,
+            locksVerified = model.locksVerified ?: false,
+            zeroEnergyTest = model.zeroEnergyTest,
+            hiddenSources = model.hiddenSources ?: false,
+
+            // Confined Space Checklist
+            oxygenLevel = model.oxygenLevel,
+            lelLevel = model.lelLevel ?: false,
+            toxicGases = model.toxicGases ?: false,
+            ventilation = model.ventilation,
+            rescueEquipment = model.rescueEquipment,
+            attendant = model.attendant,
+            rescuePlan = model.rescuePlan ?: false,
+
+            // Working at Height Checklist
+            harnessInspection = model.harnessInspection,
+            anchorPoints = model.anchorPoints,
+            fallProtection = model.fallProtection,
+            scaffolding = model.scaffolding ?: false,
+            rescuePlanHeight = model.rescuePlanHeight ?: false,
+
+            // Lifting Checklist
+            loadChart = model.loadChart,
+            riggingInspection = model.riggingInspection,
+            qualifiedCrew = model.qualifiedCrew,
+            dropZone = model.dropZone,
+            windSpeed = model.windSpeed,
+            liftPlan = model.liftPlan ?: false,
+
+            // Live Equipment Checklist
+            arcFlashAssessment = model.arcFlashAssessment,
+            arcRatedPpe = model.arcRatedPpe,
+            liveWorkProcedure = model.liveWorkProcedure,
+            voltageTesting = model.voltageTesting,
+            boundaries = model.boundaries,
+
+            // Cold Work Checklist
+            basicIsolation = model.basicIsolation ?: false,
+            correctPpe = model.correctPpe ?: false,
+            barricadingCold = model.barricadingCold ?: false,
+            spillPrevention = model.spillPrevention ?: false,
+            housekeeping = model.housekeeping ?: false
         )
     }
 

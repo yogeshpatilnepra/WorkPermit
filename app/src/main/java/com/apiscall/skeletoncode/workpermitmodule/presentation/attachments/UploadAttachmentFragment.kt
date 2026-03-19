@@ -28,7 +28,8 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 @AndroidEntryPoint
 class UploadAttachmentFragment : Fragment() {
@@ -214,9 +215,9 @@ class UploadAttachmentFragment : Fragment() {
     private fun previewAttachment(attachment: Attachment) {
         when {
             attachment.fileType.contains("image") -> {
-                // Preview image
+                // Preview image using Glide or similar
                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(Uri.parse(attachment.filePath), "image/*")
+                    data = android.net.Uri.parse(attachment.filePath)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 startActivity(Intent.createChooser(intent, "View Image"))
@@ -225,7 +226,7 @@ class UploadAttachmentFragment : Fragment() {
             attachment.fileType.contains("pdf") -> {
                 // Preview PDF
                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(Uri.parse(attachment.filePath), "application/pdf")
+                    data = android.net.Uri.parse(attachment.filePath)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 startActivity(Intent.createChooser(intent, "View PDF"))
@@ -234,7 +235,7 @@ class UploadAttachmentFragment : Fragment() {
             else -> {
                 // Open with default app
                 val intent = Intent(Intent.ACTION_VIEW).apply {
-                    setDataAndType(Uri.parse(attachment.filePath), "*/*")
+                    data = android.net.Uri.parse(attachment.filePath)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
                 startActivity(Intent.createChooser(intent, "Open File"))

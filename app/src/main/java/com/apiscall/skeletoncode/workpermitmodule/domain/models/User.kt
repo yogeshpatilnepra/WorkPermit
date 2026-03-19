@@ -18,10 +18,11 @@ data class User(
 ) : Parcelable
 
 enum class Role {
-    CONTRACTOR,
-    PERMIT_ISSUER,
+    ADMIN,
+    SUPERVISOR,
+    REQUESTOR,
+    ISSUER,
     EHS_OFFICER,
     AREA_OWNER,
-    SUPERVISOR,
     WORKER
 }

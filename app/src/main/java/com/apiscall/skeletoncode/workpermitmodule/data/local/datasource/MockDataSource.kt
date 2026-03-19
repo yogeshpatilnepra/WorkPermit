@@ -39,57 +39,66 @@ class MockDataSource @Inject constructor() {
             listOf(
                 User(
                     id = "1",
-                    username = "contractor1",
-                    email = "contractor@ptw.com",
-                    fullName = "John Contractor",
-                    role = Role.CONTRACTOR,
-                    department = "Maintenance",
+                    username = "supervisor",
+                    email = "supervisor.p1@ptw.local",
+                    fullName = "John Supervisor",
+                    role = Role.SUPERVISOR,
+                    department = "Production",
                     employeeId = "EMP001"
                 ),
                 User(
                     id = "2",
-                    username = "issuer1",
-                    email = "issuer@ptw.com",
-                    fullName = "Jane Issuer",
-                    role = Role.PERMIT_ISSUER,
-                    department = "Safety",
+                    username = "admin",
+                    email = "admin@ptw.local",
+                    fullName = "Admin User",
+                    role = Role.ADMIN,
+                    department = "Administration",
                     employeeId = "EMP002"
                 ),
                 User(
                     id = "3",
-                    username = "ehs1",
-                    email = "ehs@ptw.com",
-                    fullName = "Mike Safety",
-                    role = Role.EHS_OFFICER,
-                    department = "EHS",
+                    username = "requestor",
+                    email = "requestor.p1@ptw.local",
+                    fullName = "Requestor User",
+                    role = Role.REQUESTOR,
+                    department = "Projects",
                     employeeId = "EMP003"
                 ),
                 User(
                     id = "4",
-                    username = "areaowner1",
-                    email = "areaowner@ptw.com",
-                    fullName = "Sarah Owner",
-                    role = Role.AREA_OWNER,
-                    department = "Operations",
+                    username = "issuer",
+                    email = "issuer.p1@ptw.local",
+                    fullName = "Issuer User",
+                    role = Role.ISSUER,
+                    department = "EHS",
                     employeeId = "EMP004"
                 ),
                 User(
                     id = "5",
-                    username = "supervisor1",
-                    email = "supervisor@ptw.com",
-                    fullName = "Tom Supervisor",
-                    role = Role.SUPERVISOR,
-                    department = "Production",
+                    username = "ehs",
+                    email = "ehs.p1@ptw.local",
+                    fullName = "EHS Officer",
+                    role = Role.EHS_OFFICER,
+                    department = "EHS",
                     employeeId = "EMP005"
                 ),
                 User(
                     id = "6",
-                    username = "worker1",
-                    email = "worker@ptw.com",
-                    fullName = "Alex Worker",
+                    username = "areaowner",
+                    email = "areaowner.p1@ptw.local",
+                    fullName = "Area Owner",
+                    role = Role.AREA_OWNER,
+                    department = "Maintenance",
+                    employeeId = "EMP006"
+                ),
+                User(
+                    id = "7",
+                    username = "worker",
+                    email = "worker@ptw.local",
+                    fullName = "Worker User",
                     role = Role.WORKER,
                     department = "Field Operations",
-                    employeeId = "EMP006"
+                    employeeId = "EMP007"
                 )
             )
         )
@@ -402,5 +411,9 @@ class MockDataSource @Inject constructor() {
 
     fun addNotification(notification: Notification) {
         notifications.add(0, notification)
+    }
+
+    fun getUserByEmail(email: String): User? {
+        return users.find { it.email.equals(email, ignoreCase = true) }
     }
 }

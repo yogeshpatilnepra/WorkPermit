@@ -17,17 +17,17 @@ class AuthRepositoryImpl @Inject constructor(
     private var currentUser: User? = null
     private val _authState = MutableStateFlow(false)
 
-    override suspend fun login(username: String, password: String): Result<User> {
+    override suspend fun login(email: String, password: String): Result<User> {
         return try {
-            // Mock login validation
-            val user = mockDataSource.getUserByUsername(username)
-            // Accept "password123" for all demo users
-            if (user != null && password == "password123") {
+            // Updated to use email instead of username
+            val user = mockDataSource.getUserByEmail(email)
+            // All users have password "123456789" as per your requirements
+            if (user != null && password == "123456789") {
                 currentUser = user
                 _authState.value = true
                 Result.success(user)
             } else {
-                Result.failure(Exception("Invalid credentials"))
+                Result.failure(Exception("Invalid email or password"))
             }
         } catch (e: Exception) {
             Result.failure(e)

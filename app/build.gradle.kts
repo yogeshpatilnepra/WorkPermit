@@ -168,8 +168,9 @@ dependencies {
     implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-analytics")
-
-
+    implementation("com.google.firebase:firebase-auth:24.0.1")
+    implementation("com.google.firebase:firebase-firestore:26.1.1")
+    implementation("com.google.firebase:firebase-storage:22.0.1")
     // Security
     implementation("androidx.security:security-crypto:1.1.0")
 // QR Code

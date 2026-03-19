@@ -1,5 +1,6 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.auth
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
@@ -19,8 +20,8 @@ class LoginViewModel @Inject constructor(
     private val _loginState = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
     val loginState: StateFlow<Resource<Boolean>> = _loginState.asStateFlow()
 
-    private val _username = MutableStateFlow("")
-    val username: StateFlow<String> = _username.asStateFlow()
+    private val _email = MutableStateFlow("")
+    val email: StateFlow<String> = _email.asStateFlow()
 
     private val _password = MutableStateFlow("")
     val password: StateFlow<String> = _password.asStateFlow()
@@ -28,8 +29,8 @@ class LoginViewModel @Inject constructor(
     private val _isPasswordVisible = MutableStateFlow(false)
     val isPasswordVisible: StateFlow<Boolean> = _isPasswordVisible.asStateFlow()
 
-    fun onUsernameChanged(username: String) {
-        _username.value = username
+    fun onEmailChanged(email: String) {
+        _email.value = email
     }
 
     fun onPasswordChanged(password: String) {
@@ -42,24 +43,26 @@ class LoginViewModel @Inject constructor(
 
     fun login() {
         if (!validateInputs()) {
-            _loginState.value = Resource.Error("Please enter username and password")
+            _loginState.value = Resource.Error("Please enter email and password")
             return
         }
 
         viewModelScope.launch {
             _loginState.value = Resource.Loading
-            val result = authRepository.login(_username.value, _password.value)
+            val result = authRepository.login(_email.value, _password.value)
 
             _loginState.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Login failed. Invalid credentials.")
+                Resource.Error(
+                    result.exceptionOrNull()?.message ?: "Login failed. Invalid credentials."
+                )
             }
         }
     }
 
     private fun validateInputs(): Boolean {
-        return _username.value.isNotBlank() && _password.value.isNotBlank()
+        return _email.value.isNotBlank() && _password.value.isNotBlank()
     }
 
     fun resetState() {

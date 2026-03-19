@@ -42,14 +42,14 @@ class LoginFragment : Fragment() {
         setupListeners()
 
         // Set default values in ViewModel
-        viewModel.onUsernameChanged(binding.etUsername.text.toString())
+        viewModel.onEmailChanged(binding.etEmail.text.toString())
         viewModel.onPasswordChanged(binding.etPassword.text.toString())
     }
 
     private fun setupListeners() {
         binding.btnLogin.setOnClickListener {
             // Update ViewModel with current text before login
-            viewModel.onUsernameChanged(binding.etUsername.text.toString())
+            viewModel.onEmailChanged(binding.etEmail.text.toString())
             viewModel.onPasswordChanged(binding.etPassword.text.toString())
             viewModel.login()
         }
@@ -59,8 +59,8 @@ class LoginFragment : Fragment() {
         }
 
         // Update ViewModel when text changes
-        binding.etUsername.setOnEditorActionListener { _, _, _ ->
-            viewModel.onUsernameChanged(binding.etUsername.text.toString())
+        binding.etEmail.setOnEditorActionListener { _, _, _ ->
+            viewModel.onEmailChanged(binding.etEmail.text.toString())
             false
         }
 
@@ -70,11 +70,11 @@ class LoginFragment : Fragment() {
         }
 
         // Add text change listeners
-        binding.etUsername.addTextChangedListener(object : android.text.TextWatcher {
+        binding.etEmail.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
-                viewModel.onUsernameChanged(s.toString())
+                viewModel.onEmailChanged(s.toString())
             }
         })
 
@@ -126,15 +126,15 @@ class LoginFragment : Fragment() {
             .setTitle("Demo Credentials")
             .setMessage(
                 """
-                Use any of these credentials:
-                
-                contractor1 / password123
-                issuer1 / password123
-                ehs1 / password123
-                areaowner1 / password123
-                supervisor1 / password123
-                worker1 / password123
-                """.trimIndent()
+            Use any of these credentials:
+            
+            👤 Supervisor: supervisor.p1@ptw.local / 123456789
+            👤 Admin: admin@ptw.local / 123456789
+            👤 Requestor: requestor.p1@ptw.local / 123456789
+            👤 Issuer: issuer.p1@ptw.local / 123456789
+            👤 EHS Officer: ehs.p1@ptw.local / 123456789
+            👤 Area Owner: areaowner.p1@ptw.local / 123456789
+            """.trimIndent()
             )
             .setPositiveButton("Got it", null)
             .show()

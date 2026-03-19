@@ -7,7 +7,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.apiscall.skeletoncode.R
 import com.apiscall.skeletoncode.databinding.ItemAttachmentBinding
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Attachment
-import com.apiscall.skeletoncode.workpermitmodule.fileviewer.FileViewerActivity
+import com.bumptech.glide.Glide
 import java.text.SimpleDateFormat
 import java.util.Locale
 
@@ -56,39 +56,17 @@ class AttachmentAdapter(
             }
             binding.ivFileIcon.setImageResource(iconRes)
 
-            binding.root.setOnClickListener {
-//                onItemClick(attachment)
-
-                val context = binding.root.context
-                when {
-                    attachment.fileType.contains("image") -> {
-                        // For images, we can also show multiple images if needed
-                        FileViewerActivity.openFile(
-                            context,
-                            attachment.filePath,
-                            attachment.fileType,
-                            attachment.fileName
-                        )
-                    }
-                    attachment.fileType.contains("pdf") -> {
-                        FileViewerActivity.openFile(
-                            context,
-                            attachment.filePath,
-                            attachment.fileType,
-                            attachment.fileName
-                        )
-                    }
-                    else -> {
-                        // For text files or other documents
-                        FileViewerActivity.openFile(
-                            context,
-                            attachment.filePath,
-                            attachment.fileType,
-                            attachment.fileName
-                        )
-                    }
-                }
+            // If it's an image, try to load thumbnail
+            if (attachment.fileType.contains("image")) {
+                Glide.with(binding.root.context)
+                    .load(attachment.filePath)
+                    .placeholder(iconRes)
+                    .error(iconRes)
+                    .centerCrop()
+                    .into(binding.ivFileIcon)
             }
+
+            binding.root.setOnClickListener { onItemClick(attachment) }
         }
 
         private fun formatFileSize(size: Long): String {

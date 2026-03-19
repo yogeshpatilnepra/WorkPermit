@@ -8,89 +8,120 @@ import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
-import com.apiscall.skeletoncode.workpermitmodule.domain.repository.PermitRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
-class PermitDetailViewModel @Inject constructor(
-    private val firebaseRepository: FirebaseRepository,
-    private val permitRepository: PermitRepository,
-    private val authRepository: AuthRepository
+class PermitsViewModel @Inject constructor(
+    private val authRepository: AuthRepository,
+    private val firebaseRepository: FirebaseRepository
 ) : ViewModel() {
 
-    private val _permitDetails = MutableStateFlow<Resource<Permit>>(Resource.Loading)
-    val permitDetails: StateFlow<Resource<Permit>> = _permitDetails.asStateFlow()
+    private val _currentUser = MutableStateFlow<User?>(null)
+    val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
-    private val _actionResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
-    val actionResult: StateFlow<Resource<Boolean>> = _actionResult.asStateFlow()
+    private val _permits = MutableStateFlow<Resource<List<Permit>>>(Resource.Loading)
+    val permits: StateFlow<Resource<List<Permit>>> = _permits.asStateFlow()
 
-    fun loadPermitDetails(permitId: String) {
+    // Filter states
+    private val _selectedPlant = MutableStateFlow("All Plants")
+    private val _selectedStatus = MutableStateFlow("all")
+    private val _selectedType = MutableStateFlow("All Types")
+    private val _searchQuery = MutableStateFlow("")
+
+    init {
+        loadCurrentUser()
+        setupPermitsListener()
+    }
+
+    fun loadCurrentUser() {
         viewModelScope.launch {
-            _permitDetails.value = Resource.Loading
+            _currentUser.value = authRepository.getCurrentUser()
+        }
+    }
 
-            firebaseRepository.getPermitById(permitId).collect { permitModel ->
-                if (permitModel != null) {
-                    val permit = convertToPermit(permitModel)
-                    _permitDetails.value = Resource.Success(permit)
-                } else {
-                    _permitDetails.value = Resource.Error("Permit not found")
+    private fun setupPermitsListener() {
+        viewModelScope.launch {
+            combine(
+                _selectedPlant,
+                _selectedStatus,
+                _selectedType,
+                _searchQuery
+            ) { plant, status, type, query ->
+                Triple(plant, status, type) to query
+            }.collect { (filters, query) ->
+                val (plant, status, type) = filters
+
+                _permits.value = Resource.Loading
+
+                firebaseRepository.getFilteredPermitsFlow(
+                    plant = plant,
+                    status = status,
+                    type = type,
+                    searchQuery = query
+                ).collect { permitModels ->
+                    // Convert PermitModel to Permit (your domain model)
+                    val permits = permitModels.map { model ->
+                        convertToPermit(model)
+                    }
+                    _permits.value = Resource.Success(permits)
                 }
             }
         }
     }
 
-    fun approvePermit(permitId: String, comments: String?) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            // Update status in Firebase
-            val result = firebaseRepository.updatePermitStatus(permitId, "approved", comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Approval failed")
-            }
-        }
+    fun loadPermits() {
+        // Trigger reload by updating filters
+        _selectedPlant.value = _selectedPlant.value
     }
 
-    fun rejectPermit(permitId: String, comments: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            val result = firebaseRepository.updatePermitStatus(permitId, "rejected", comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Rejection failed")
-            }
-        }
+    fun updatePlantFilter(plant: String) {
+        _selectedPlant.value = plant
     }
 
-    fun sendBackPermit(permitId: String, comments: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            val result = firebaseRepository.updatePermitStatus(permitId, "sent back", comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Action failed")
-            }
+    fun updateStatusFilter(status: String) {
+        _selectedStatus.value = status
+    }
+
+    fun updateTypeFilter(type: String) {
+        _selectedType.value = type
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
+
+    fun clearFilters() {
+        _selectedPlant.value = "All Plants"
+        _selectedStatus.value = "all"
+        _selectedType.value = "All Types"
+        _searchQuery.value = ""
+    }
+
+    fun canCreatePermit(): Boolean {
+        val user = _currentUser.value ?: return false
+        return when (user.role) {
+            Role.ADMIN, Role.SUPERVISOR, Role.REQUESTOR -> true
+            else -> false
         }
     }
 
     private fun convertToPermit(model: com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel): Permit {
+        // Create a mock user for the requester (you should fetch actual user from your user repository)
         val requester = User(
             id = model.requestorId,
             username = "",
             email = model.requestorEmail,
             fullName = model.requestorName,
             role = Role.REQUESTOR,
-            department = model.department,
+            department = "",
             employeeId = ""
         )
 
@@ -117,7 +148,7 @@ class PermitDetailViewModel @Inject constructor(
             riskAssessmentNo = model.riskAssessmentNo,
             jsaNo = model.jsaNo,
             toolboxTalkDone = model.toolboxTalkDone,
-            ppeVerified = model.ppeVerified,
+            ppeVerified = model.ppeVerified
         )
     }
 

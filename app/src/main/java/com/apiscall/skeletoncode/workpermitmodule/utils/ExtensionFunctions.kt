@@ -56,31 +56,41 @@ fun Date.formatFull(): String {
 }
 
 // PermitStatus Extensions
-fun PermitStatus.getStatusText(): String {
-    return when (this) {
-        PermitStatus.DRAFT -> "Draft"
-        PermitStatus.PENDING_ISSUER_APPROVAL,
-        PermitStatus.PENDING_AREA_OWNER_APPROVAL,
-        PermitStatus.PENDING_EHS_APPROVAL -> "Pending"
-
-        PermitStatus.APPROVED -> "Approved"
-        PermitStatus.REJECTED -> "Rejected"
-        PermitStatus.ACTIVE -> "Active"
-        PermitStatus.CLOSED -> "Closed"
-        PermitStatus.EXPIRED -> "Expired"
+fun getStatusText(status: String): String {
+    return when (status.uppercase()) {
+        "DRAFT" -> "Draft"
+        "PENDING_ISSUER_APPROVAL" -> "Issuer Review"
+        "PENDING_AREA_OWNER_APPROVAL" -> "Area Owner Review"
+        "PENDING_EHS_APPROVAL" -> "EHS Review"
+        "APPROVED" -> "Issued"
+        "ACTIVE" -> "In Progress"
+        "CLOSED" -> "Closed"
+        "REJECTED" -> "Rejected"
+        "EXPIRED" -> "Expired"
+        else -> status.replace("_", " ").lowercase()
+            .replaceFirstChar { it.uppercase() }
     }
 }
 
-fun PermitStatus.getStatusColor(): Int {
-    return when (this) {
-        PermitStatus.DRAFT -> R.drawable.bg_status_draft
-        PermitStatus.PENDING_ISSUER_APPROVAL,
-        PermitStatus.PENDING_AREA_OWNER_APPROVAL,
-        PermitStatus.PENDING_EHS_APPROVAL -> R.drawable.bg_status_pending
+fun getStatusColor(status: String): Int {
+    return when (status.uppercase()) {
+        "DRAFT" -> R.drawable.bg_status_draft
+        "PENDING_ISSUER_APPROVAL", "PENDING_AREA_OWNER_APPROVAL", "PENDING_EHS_APPROVAL" ->
+            R.drawable.bg_status_pending
 
-        PermitStatus.APPROVED -> R.drawable.bg_status_approved
-        PermitStatus.REJECTED -> R.drawable.bg_status_rejected
-        PermitStatus.ACTIVE -> R.drawable.bg_status_active
-        PermitStatus.CLOSED, PermitStatus.EXPIRED -> R.drawable.bg_status_closed
+        "APPROVED" -> R.drawable.bg_status_approved
+        "ACTIVE" -> R.drawable.bg_status_active
+        "CLOSED" -> R.drawable.bg_status_closed
+        "REJECTED" -> R.drawable.bg_status_rejected
+        "EXPIRED" -> R.drawable.bg_status_expired
+        else -> R.drawable.bg_status_draft
     }
+}
+
+fun PermitStatus.getStatusText(): String {
+    return getStatusText(this.name)
+}
+
+fun PermitStatus.getStatusColor(): Int {
+    return getStatusColor(this.name)
 }

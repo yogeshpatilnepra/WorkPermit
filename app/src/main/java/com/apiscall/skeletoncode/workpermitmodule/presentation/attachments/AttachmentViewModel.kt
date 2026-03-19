@@ -4,13 +4,13 @@ package com.apiscall.skeletoncode.workpermitmodule.presentation.attachments
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Attachment
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
-import com.apiscall.skeletoncode.workpermitmodule.domain.repository.PermitRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -26,7 +26,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class AttachmentViewModel @Inject constructor(
-    private val permitRepository: PermitRepository,
+    private val firebaseRepository: FirebaseRepository,
     private val authRepository: AuthRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -40,12 +40,38 @@ class AttachmentViewModel @Inject constructor(
     fun loadAttachments(permitId: String) {
         viewModelScope.launch {
             _attachments.value = Resource.Loading
-            permitRepository.getPermitById(permitId).collect { permit ->
-                if (permit != null) {
-                    _attachments.value = Resource.Success(permit.attachments)
-                } else {
-                    _attachments.value = Resource.Error("Permit not found")
+
+            try {
+                firebaseRepository.getAttachmentsFlow(permitId).collect { attachmentMaps ->
+                    val attachmentsList = attachmentMaps.mapNotNull { map ->
+                        try {
+                            Attachment(
+                                id = map["id"] as? String ?: return@mapNotNull null,
+                                fileName = map["fileName"] as? String ?: "",
+                                filePath = map["filePath"] as? String ?: "",
+                                fileType = map["fileType"] as? String ?: "",
+                                fileSize = (map["fileSize"] as? Long) ?: 0,
+                                uploadedBy = User(
+                                    id = map["uploadedById"] as? String ?: "",
+                                    username = "",
+                                    email = "",
+                                    fullName = map["uploadedByName"] as? String ?: "",
+                                    role = com.apiscall.skeletoncode.workpermitmodule.domain.models.Role.WORKER,
+                                    department = "",
+                                    employeeId = ""
+                                ),
+                                uploadedAt = Date(
+                                    (map["uploadedAt"] as? Long) ?: System.currentTimeMillis()
+                                )
+                            )
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    _attachments.value = Resource.Success(attachmentsList)
                 }
+            } catch (e: Exception) {
+                _attachments.value = Resource.Error(e.message ?: "Error loading attachments")
             }
         }
     }
@@ -61,21 +87,42 @@ class AttachmentViewModel @Inject constructor(
             }
 
             try {
-                val attachment = Attachment(
-                    id = UUID.randomUUID().toString(),
-                    fileName = file.name,
-                    filePath = file.absolutePath,
-                    fileType = mimeType,
-                    fileSize = file.length(),
-                    uploadedBy = currentUser,
-                    uploadedAt = Date()
-                )
+                // Upload file to Firebase Storage
+                val fileName = file.name
+                val downloadUrlResult =
+                    firebaseRepository.uploadAttachment(permitId, file, fileName)
 
-                val result = permitRepository.addAttachment(permitId, attachment)
-                _uploadResult.value = if (result.isSuccess) {
-                    Resource.Success(true)
+                if (downloadUrlResult.isSuccess) {
+                    val downloadUrl = downloadUrlResult.getOrNull() ?: ""
+
+                    // Create attachment record
+                    val attachmentId = UUID.randomUUID().toString()
+                    val attachment = mapOf(
+                        "id" to attachmentId,
+                        "fileName" to fileName,
+                        "filePath" to downloadUrl,
+                        "fileType" to mimeType,
+                        "fileSize" to file.length(),
+                        "uploadedById" to currentUser.id,
+                        "uploadedByName" to currentUser.fullName,
+                        "uploadedAt" to System.currentTimeMillis()
+                    )
+
+                    // Save attachment reference to Firestore
+                    val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
+
+                    if (addResult.isSuccess) {
+                        _uploadResult.value = Resource.Success(true)
+                    } else {
+                        _uploadResult.value = Resource.Error(
+                            addResult.exceptionOrNull()?.message
+                                ?: "Failed to save attachment record"
+                        )
+                    }
                 } else {
-                    Resource.Error(result.exceptionOrNull()?.message ?: "Upload failed")
+                    _uploadResult.value = Resource.Error(
+                        downloadUrlResult.exceptionOrNull()?.message ?: "Failed to upload file"
+                    )
                 }
             } catch (e: Exception) {
                 _uploadResult.value = Resource.Error(e.message ?: "Upload failed")
@@ -97,21 +144,42 @@ class AttachmentViewModel @Inject constructor(
                 val file = copyUriToFile(uri)
                 val actualMimeType = getMimeType(uri) ?: mimeType
 
-                val attachment = Attachment(
-                    id = UUID.randomUUID().toString(),
-                    fileName = getFileName(uri) ?: "file_${System.currentTimeMillis()}",
-                    filePath = file.absolutePath,
-                    fileType = actualMimeType,
-                    fileSize = file.length(),
-                    uploadedBy = currentUser,
-                    uploadedAt = Date()
-                )
+                // Upload file to Firebase Storage
+                val fileName = file.name
+                val downloadUrlResult =
+                    firebaseRepository.uploadAttachment(permitId, file, fileName)
 
-                val result = permitRepository.addAttachment(permitId, attachment)
-                _uploadResult.value = if (result.isSuccess) {
-                    Resource.Success(true)
+                if (downloadUrlResult.isSuccess) {
+                    val downloadUrl = downloadUrlResult.getOrNull() ?: ""
+
+                    // Create attachment record
+                    val attachmentId = UUID.randomUUID().toString()
+                    val attachment = mapOf(
+                        "id" to attachmentId,
+                        "fileName" to fileName,
+                        "filePath" to downloadUrl,
+                        "fileType" to actualMimeType,
+                        "fileSize" to file.length(),
+                        "uploadedById" to currentUser.id,
+                        "uploadedByName" to currentUser.fullName,
+                        "uploadedAt" to System.currentTimeMillis()
+                    )
+
+                    // Save attachment reference to Firestore
+                    val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
+
+                    if (addResult.isSuccess) {
+                        _uploadResult.value = Resource.Success(true)
+                    } else {
+                        _uploadResult.value = Resource.Error(
+                            addResult.exceptionOrNull()?.message
+                                ?: "Failed to save attachment record"
+                        )
+                    }
                 } else {
-                    Resource.Error(result.exceptionOrNull()?.message ?: "Upload failed")
+                    _uploadResult.value = Resource.Error(
+                        downloadUrlResult.exceptionOrNull()?.message ?: "Failed to upload file"
+                    )
                 }
             } catch (e: Exception) {
                 _uploadResult.value = Resource.Error(e.message ?: "Upload failed")
@@ -139,7 +207,7 @@ class AttachmentViewModel @Inject constructor(
             val cursor = context.contentResolver.query(uri, null, null, null, null)
             cursor?.use {
                 if (it.moveToFirst()) {
-                    val nameIndex = it.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
                     if (nameIndex != -1) {
                         fileName = it.getString(nameIndex)
                     }
