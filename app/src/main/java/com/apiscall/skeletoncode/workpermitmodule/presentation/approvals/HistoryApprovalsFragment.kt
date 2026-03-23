@@ -1,4 +1,4 @@
-package com.apiscall.skeletoncode.workpermitmodule.presentation.permits
+package com.apiscall.skeletoncode.workpermitmodule.presentation.approvals
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -9,33 +9,30 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.apiscall.skeletoncode.databinding.FragmentPendingApprovalsBinding
-import com.apiscall.skeletoncode.workpermitmodule.presentation.permits.adapters.PermitAdapter
-import com.apiscall.skeletoncode.workpermitmodule.presentation.permits.viewmodels.PermitListViewModel
+import com.apiscall.skeletoncode.R
+import com.apiscall.skeletoncode.databinding.FragmentApprovalsListBinding
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import com.apiscall.skeletoncode.workpermitmodule.utils.gone
-import com.apiscall.skeletoncode.workpermitmodule.utils.showSnackbar
 import com.apiscall.skeletoncode.workpermitmodule.utils.visible
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
-class PendingApprovalsFragment : Fragment() {
+class HistoryApprovalsFragment : Fragment() {
 
-    private var _binding: FragmentPendingApprovalsBinding? = null
+    private var _binding: FragmentApprovalsListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: PermitListViewModel by viewModels()
-
-    private lateinit var permitAdapter: PermitAdapter
+    private val viewModel: ApprovalQueueViewModel by viewModels()
+    private lateinit var historyAdapter: PermitActionAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
-        _binding = FragmentPendingApprovalsBinding.inflate(inflater, container, false)
+        _binding = FragmentApprovalsListBinding.inflate(inflater, container, false)
         return binding.root
     }
 
@@ -44,68 +41,57 @@ class PendingApprovalsFragment : Fragment() {
 
         setupRecyclerView()
         setupObservers()
-        setupListeners()
 
-        viewModel.loadPendingApprovals()
+        viewModel.loadRecentActions()
     }
 
     private fun setupRecyclerView() {
-        permitAdapter = PermitAdapter { permitId ->
-            val action =
-                PendingApprovalsFragmentDirections.actionPendingApprovalsFragmentToPermitDetailsFragment(
-                    permitId
-                )
+        historyAdapter = PermitActionAdapter { permitId ->
+            val action = ApprovalQueueFragmentDirections
+                .actionApprovalQueueFragmentToPermitDetailsFragment(permitId)
             findNavController().navigate(action)
         }
-
         binding.rvPermits.apply {
             layoutManager = LinearLayoutManager(requireContext())
-            adapter = permitAdapter
+            adapter = historyAdapter
         }
-
-        // Hide FAB for this fragment
-        binding.btnFabAdd.hide()
     }
 
     private fun setupObservers() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.permits.collectLatest { resource ->
+            viewModel.recentActions.collectLatest { resource ->
                 when (resource) {
                     is Resource.Loading -> {
                         binding.progressBar.visible()
                         binding.rvPermits.gone()
-                        binding.tvEmpty.gone()
+                        binding.emptyLayout.gone()
                     }
 
                     is Resource.Success -> {
                         binding.progressBar.gone()
                         if (resource.data.isNullOrEmpty()) {
                             binding.rvPermits.gone()
-                            binding.tvEmpty.visible()
-                            binding.tvEmpty.text = "No pending approvals"
+                            binding.emptyLayout.visibility = View.VISIBLE
+                            binding.tvEmpty.text = "No approval history"
+                            binding.emptyIcon.setImageResource(R.drawable.ic_empty)
                         } else {
+                            binding.emptyLayout.gone()
                             binding.rvPermits.visible()
-                            binding.tvEmpty.gone()
-                            permitAdapter.submitList(resource.data)
+                            historyAdapter.submitList(resource.data)
                         }
                     }
 
                     is Resource.Error -> {
                         binding.progressBar.gone()
                         binding.rvPermits.gone()
-                        binding.tvEmpty.visible()
-                        binding.root.showSnackbar(resource.message ?: "Error loading permits")
+                        binding.emptyLayout.visibility = View.VISIBLE
+                        binding.tvEmpty.text = resource.message ?: "Error loading history"
+                        binding.emptyIcon.setImageResource(R.drawable.ic_error)
                     }
 
                     else -> {}
                 }
             }
-        }
-    }
-
-    private fun setupListeners() {
-        binding.btnRetry.setOnClickListener {
-            viewModel.loadPendingApprovals()
         }
     }
 

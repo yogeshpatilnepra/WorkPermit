@@ -53,11 +53,12 @@ class MyPermitsFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        permitAdapter = PermitAdapter { permitId ->
-            val action =
-                MyPermitsFragmentDirections.actionMyPermitsFragmentToPermitDetailsFragment(permitId)
-            findNavController().navigate(action)
-        }
+        permitAdapter = PermitAdapter(
+            onItemClick = { permitId ->
+                val action = MyPermitsFragmentDirections.actionMyPermitsFragmentToPermitDetailsFragment(permitId)
+                findNavController().navigate(action)
+            }
+        )
 
         binding.rvPermits.apply {
             layoutManager = LinearLayoutManager(requireContext())

@@ -57,10 +57,9 @@ class SearchFilterFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        permitAdapter = PermitAdapter { permitId ->
-            // Navigate to permit details
-            // findNavController().navigate(...)
-        }
+        permitAdapter = PermitAdapter(onItemClick = {
+
+        })
 
         binding.rvResults.apply {
             layoutManager = LinearLayoutManager(requireContext())

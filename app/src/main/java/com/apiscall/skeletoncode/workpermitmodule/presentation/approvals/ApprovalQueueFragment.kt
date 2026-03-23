@@ -1,5 +1,6 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.approvals
 
+
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -7,15 +8,13 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.viewpager2.widget.ViewPager2
 import com.apiscall.skeletoncode.databinding.FragmentApprovalQueueBinding
-import com.apiscall.skeletoncode.workpermitmodule.presentation.permits.adapters.PermitAdapter
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
-import com.apiscall.skeletoncode.workpermitmodule.utils.gone
 import com.apiscall.skeletoncode.workpermitmodule.utils.showSnackbar
-import com.apiscall.skeletoncode.workpermitmodule.utils.visible
+import com.google.android.material.tabs.TabLayoutMediator
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
@@ -26,10 +25,18 @@ class ApprovalQueueFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: ApprovalQueueViewModel by viewModels()
-    private lateinit var permitAdapter: PermitAdapter
+
+    private lateinit var pagerAdapter: ApprovalsPagerAdapter
+    private val fragments = listOf(
+        PendingApprovalsFragment(),
+        HistoryApprovalsFragment()
+    )
+    private val titles = listOf("Pending", "History")
 
     override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View {
         _binding = FragmentApprovalQueueBinding.inflate(inflater, container, false)
         return binding.root
@@ -39,89 +46,68 @@ class ApprovalQueueFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         setupToolbar()
-        setupRecyclerView()
+        setupViewPager()
         setupObservers()
         setupListeners()
-
-        viewModel.loadPendingApprovals()
     }
 
     private fun setupToolbar() {
         binding.toolbar.setNavigationOnClickListener {
-            findNavController().navigateUp()
+            requireActivity().onBackPressedDispatcher.onBackPressed()
         }
     }
 
-    private fun setupRecyclerView() {
-        permitAdapter = PermitAdapter { permitId ->
-            val action =
-                ApprovalQueueFragmentDirections.actionApprovalQueueFragmentToPermitDetailsFragment(
-                        permitId
-                    )
-            findNavController().navigate(action)
-        }
+    private fun setupViewPager() {
+        pagerAdapter = ApprovalsPagerAdapter(requireActivity(), fragments, titles)
+        binding.viewPager.adapter = pagerAdapter
 
-        binding.rvApprovals.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = permitAdapter
-        }
+        // Attach TabLayout to ViewPager2
+        TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
+            tab.text = titles[position]
+        }.attach()
+
+        // Add page change callback to refresh data when tab changes
+        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+            override fun onPageSelected(position: Int) {
+                super.onPageSelected(position)
+                when (position) {
+                    0 -> viewModel.loadPendingApprovals()
+                    1 -> viewModel.loadRecentActions()
+                }
+            }
+        })
     }
 
     private fun setupObservers() {
+        // Observe approval result to show success message and refresh
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.pendingApprovals.collectLatest { resource ->
+            viewModel.approvalResult.collectLatest { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        binding.progressBar.visible()
-                        binding.rvApprovals.gone()
-                        binding.emptyLayout.gone()
+                        // Show loading indicator if needed
                     }
 
                     is Resource.Success -> {
-                        binding.progressBar.gone()
-                        if (resource.data.isNullOrEmpty()) {
-                            binding.emptyLayout.visible()
-                            binding.tvEmpty.text = "No pending approvals"
-                            binding.rvApprovals.gone()
+                        binding.root.showSnackbar("Action completed successfully!")
+                        viewModel.resetApprovalResult()
+                        // Refresh current tab
+                        val currentPosition = binding.viewPager.currentItem
+                        if (currentPosition == 0) {
+                            viewModel.loadPendingApprovals()
                         } else {
-                            binding.emptyLayout.gone()
-                            binding.rvApprovals.visible()
-                            permitAdapter.submitList(resource.data)
+                            viewModel.loadRecentActions()
+                        }
+                        // Delay to allow refresh then navigate back
+                        delay(500)
+                        try {
+                            requireActivity().onBackPressedDispatcher.onBackPressed()
+                        } catch (e: Exception) {
                         }
                     }
 
                     is Resource.Error -> {
-                        binding.progressBar.gone()
-                        binding.emptyLayout.visible()
-                        binding.tvEmpty.text = resource.message ?: "Error loading approvals"
-                    }
-
-                    else -> {}
-                }
-            }
-        }
-
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.actionResult.collectLatest { resource ->
-                when (resource) {
-                    is Resource.Loading -> {
-                        // Show snackbar loading indicator only
-                        binding.root.showSnackbar("Processing...")
-                    }
-
-                    is Resource.Success -> {
-                        binding.root.showSnackbar("Permit approved successfully!")
-                        // Reset action result to idle
-                        viewModel.resetActionResult()
-                        // Reload the list
-                        viewModel.loadPendingApprovals()
-                        // Navigate back to clear the current view
-                        findNavController().popBackStack()
-                    }
-
-                    is Resource.Error -> {
                         binding.root.showSnackbar(resource.message ?: "Action failed")
-                        viewModel.resetActionResult()
+                        viewModel.resetApprovalResult()
                     }
 
                     else -> {}
@@ -131,12 +117,14 @@ class ApprovalQueueFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.btnRetry.setOnClickListener {
-            viewModel.loadPendingApprovals()
-        }
-
         binding.fabRefresh.setOnClickListener {
-            viewModel.loadPendingApprovals()
+            val currentPosition = binding.viewPager.currentItem
+            if (currentPosition == 0) {
+                viewModel.loadPendingApprovals()
+            } else {
+                viewModel.loadRecentActions()
+            }
+            binding.root.showSnackbar("Refreshing...")
         }
     }
 

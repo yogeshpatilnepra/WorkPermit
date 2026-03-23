@@ -18,7 +18,14 @@ import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.presentation.permits.adapters.ApprovalHistoryAdapter
 import com.apiscall.skeletoncode.workpermitmodule.presentation.permits.adapters.AttachmentAdapter
 import com.apiscall.skeletoncode.workpermitmodule.presentation.permits.viewmodels.PermitDetailViewModel
-import com.apiscall.skeletoncode.workpermitmodule.utils.*
+import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
+import com.apiscall.skeletoncode.workpermitmodule.utils.formatDate
+import com.apiscall.skeletoncode.workpermitmodule.utils.getStatusColor
+import com.apiscall.skeletoncode.workpermitmodule.utils.getStatusText
+import com.apiscall.skeletoncode.workpermitmodule.utils.gone
+import com.apiscall.skeletoncode.workpermitmodule.utils.loadImage
+import com.apiscall.skeletoncode.workpermitmodule.utils.showSnackbar
+import com.apiscall.skeletoncode.workpermitmodule.utils.visible
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
@@ -37,9 +44,7 @@ class PermitDetailsFragment : Fragment() {
     private lateinit var attachmentAdapter: AttachmentAdapter
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         _binding = FragmentPermitDetailsBinding.inflate(inflater, container, false)
         return binding.root
@@ -130,8 +135,8 @@ class PermitDetailsFragment : Fragment() {
     private fun bindPermitData(permit: Permit) {
         // Basic Information
         binding.tvPermitNumber.text = permit.permitNumber
-        binding.tvPermitType.text = permit.permitType.name.replace("_", " ").lowercase()
-            .replaceFirstChar { it.uppercase() }
+        binding.tvPermitType.text =
+            permit.permitType.name.replace("_", " ").lowercase().replaceFirstChar { it.uppercase() }
         binding.tvTitle.text = permit.title
         binding.tvDescription.text = permit.description
         binding.tvLocation.text = permit.location
@@ -260,8 +265,7 @@ class PermitDetailsFragment : Fragment() {
                         this.isChecked = isChecked
                         this.isEnabled = false
                         layoutParams = LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.MATCH_PARENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
+                            ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
                         ).apply { topMargin = 8 }
                     }
                 binding.checklistContainer.addView(checkBox)
@@ -371,19 +375,18 @@ class PermitDetailsFragment : Fragment() {
         val editText =
             dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etComment)
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("$title Permit")
-            .setView(dialogView)
+        MaterialAlertDialogBuilder(requireContext()).setTitle("$title Permit").setView(dialogView)
             .setPositiveButton(title) { _, _ ->
                 val comments = editText.text?.toString()
                 if (isApprove) {
                     viewModel.approvePermit(args.permitId, role, comments)
+                    // Navigate back after approval
+                    findNavController().popBackStack()
                 } else {
                     viewModel.rejectPermit(args.permitId, role, comments ?: "Rejected")
+                    findNavController().popBackStack()
                 }
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun showSendBackDialog(role: String) {
@@ -391,16 +394,12 @@ class PermitDetailsFragment : Fragment() {
         val editText =
             dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etComment)
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Send Back Permit")
-            .setMessage("Provide reason for sending back")
-            .setView(dialogView)
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Send Back Permit")
+            .setMessage("Provide reason for sending back").setView(dialogView)
             .setPositiveButton("Send Back") { _, _ ->
                 val comments = editText.text?.toString() ?: "Sent back for revision"
                 viewModel.sendBackPermit(args.permitId, role, comments)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun showClosureDialog() {
@@ -408,16 +407,12 @@ class PermitDetailsFragment : Fragment() {
         val editText =
             dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etComment)
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Close Permit")
-            .setMessage("Provide closure remarks")
-            .setView(dialogView)
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Close Permit")
+            .setMessage("Provide closure remarks").setView(dialogView)
             .setPositiveButton("Close") { _, _ ->
                 val comments = editText.text?.toString() ?: "Work completed"
                 viewModel.closePermit(args.permitId, comments)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun showWorkerSignInDialog(permitId: String) {
@@ -425,16 +420,12 @@ class PermitDetailsFragment : Fragment() {
         val editText =
             dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etComment)
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Worker Sign In")
-            .setMessage("Enter worker name")
-            .setView(dialogView)
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Worker Sign In")
+            .setMessage("Enter worker name").setView(dialogView)
             .setPositiveButton("Sign In") { _, _ ->
                 val workerName = editText.text?.toString()?.takeIf { it.isNotBlank() } ?: "Worker"
                 viewModel.workerSignIn(permitId, workerName)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun showWorkerSignOutDialog(permitId: String) {
@@ -442,30 +433,25 @@ class PermitDetailsFragment : Fragment() {
         val editText =
             dialogView.findViewById<com.google.android.material.textfield.TextInputEditText>(R.id.etComment)
 
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Worker Sign Out")
-            .setMessage("Confirm worker sign out")
-            .setView(dialogView)
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Worker Sign Out")
+            .setMessage("Confirm worker sign out").setView(dialogView)
             .setPositiveButton("Sign Out") { _, _ ->
                 val workerName = editText.text?.toString()?.takeIf { it.isNotBlank() } ?: "Worker"
                 viewModel.workerSignOut(permitId, workerName)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
+            }.setNegativeButton("Cancel", null).show()
     }
 
     private fun showAttachmentPreview(filePath: String) {
-        MaterialAlertDialogBuilder(requireContext())
-            .setTitle("Attachment Preview")
-            .setMessage("Preview not implemented in demo")
-            .setPositiveButton("OK", null)
-            .show()
+        MaterialAlertDialogBuilder(requireContext()).setTitle("Attachment Preview")
+            .setMessage("Preview not implemented in demo").setPositiveButton("OK", null).show()
     }
 
     private fun setupListeners() {
         binding.btnAddAttachment.setOnClickListener {
-            val action = PermitDetailsFragmentDirections
-                .actionPermitDetailsFragmentToUploadAttachmentFragment(args.permitId)
+            val action =
+                PermitDetailsFragmentDirections.actionPermitDetailsFragmentToUploadAttachmentFragment(
+                        args.permitId
+                    )
             findNavController().navigate(action)
         }
     }

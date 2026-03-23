@@ -3,6 +3,7 @@ package com.apiscall.skeletoncode.workpermitmodule.presentation.approvals
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.ApprovalStage
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus
@@ -12,9 +13,11 @@ import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import java.util.Date
 import javax.inject.Inject
@@ -31,8 +34,20 @@ class ApprovalQueueViewModel @Inject constructor(
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
-    private val _actionResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
-    val actionResult: StateFlow<Resource<Boolean>> = _actionResult.asStateFlow()
+    private val _approvalResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
+    val approvalResult: StateFlow<Resource<Boolean>> = _approvalResult.asStateFlow()
+
+    private val _recentActions = MutableStateFlow<Resource<List<PermitAction>>>(Resource.Loading)
+    val recentActions: StateFlow<Resource<List<PermitAction>>> = _recentActions.asStateFlow()
+
+    private val _rejectionResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
+    val rejectionResult: StateFlow<Resource<Boolean>> = _rejectionResult.asStateFlow()
+
+    private val _sendBackResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
+    val sendBackResult: StateFlow<Resource<Boolean>> = _sendBackResult.asStateFlow()
+
+    private var pendingJob: Job? = null
+    private var historyJob: Job? = null
 
     init {
         loadCurrentUser()
@@ -45,64 +60,157 @@ class ApprovalQueueViewModel @Inject constructor(
     }
 
     fun loadPendingApprovals() {
-        viewModelScope.launch {
+        // Only show loading if we don't have data yet to avoid UI flicker
+        if (_pendingApprovals.value !is Resource.Success) {
             _pendingApprovals.value = Resource.Loading
+        }
 
-            val user = _currentUser.value
-            if (user == null) {
-                _pendingApprovals.value = Resource.Error("User not logged in")
-                return@launch
-            }
-
-            val approvalStage = when (user.role) {
-                Role.ISSUER -> "issuer_review"
-                Role.EHS_OFFICER -> "ehs_review"
-                Role.AREA_OWNER -> "area_owner_review"
-                else -> null
-            }
-
-            if (approvalStage == null) {
-                _pendingApprovals.value = Resource.Success(emptyList())
-                return@launch
-            }
-
-            firebaseRepository.getPermitsByApprovalStageFlow(approvalStage)
-                .collect { permitModels ->
-                    val permits = permitModels.map { convertToPermit(it) }
-                    _pendingApprovals.value = Resource.Success(permits)
+        pendingJob?.cancel()
+        pendingJob = viewModelScope.launch {
+            try {
+                var user = _currentUser.value ?: authRepository.getCurrentUser()
+                if (user == null) {
+                    _pendingApprovals.value = Resource.Error("User not logged in")
+                    return@launch
                 }
+
+                val approvalStage = when (user.role) {
+                    Role.ISSUER -> ApprovalStage.ISSUER_REVIEW
+                    Role.EHS_OFFICER -> ApprovalStage.EHS_REVIEW
+                    Role.AREA_OWNER -> ApprovalStage.AREA_OWNER_REVIEW
+                    else -> null
+                }
+
+                if (approvalStage == null) {
+                    _pendingApprovals.value = Resource.Success(emptyList())
+                    return@launch
+                }
+
+                firebaseRepository.getPermitsByApprovalStageFlow(approvalStage)
+                    .catch { e ->
+                        _pendingApprovals.value = Resource.Error(e.message ?: "Failed to load")
+                    }
+                    .collect { permitModels ->
+                        val permits = permitModels.map { convertToPermit(it) }
+                        _pendingApprovals.value = Resource.Success(permits)
+                    }
+            } catch (e: Exception) {
+                _pendingApprovals.value = Resource.Error(e.message ?: "An error occurred")
+            }
+        }
+    }
+
+    fun loadRecentActions() {
+        historyJob?.cancel()
+        historyJob = viewModelScope.launch {
+            _recentActions.value = Resource.Loading
+
+            var user = _currentUser.value ?: authRepository.getCurrentUser()
+            if (user == null) {
+                _recentActions.value = Resource.Error("User not logged in")
+                return@launch
+            }
+
+            firebaseRepository.getPermitsFlow().collect { allPermits ->
+                val actions = mutableListOf<PermitAction>()
+
+                allPermits.forEach { permit ->
+                    when (user.role) {
+                        Role.ISSUER -> {
+                            if (permit.issuerId == user.id && permit.issuerReviewedAt != null) {
+                                val actionType = when {
+                                    permit.status == "rejected" -> "Rejected"
+                                    permit.status == "sent_back" -> "Sent Back"
+                                    permit.approvalStage != ApprovalStage.ISSUER_REVIEW && permit.approvalStage != "draft" -> "Approved"
+                                    else -> null
+                                }
+                                actionType?.let {
+                                    actions.add(
+                                        PermitAction(
+                                            permitId = permit.id,
+                                            permitNumber = permit.permitNumber,
+                                            title = permit.title,
+                                            action = it,
+                                            timestamp = permit.issuerReviewedAt.toDate()
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                        Role.EHS_OFFICER -> {
+                            if (permit.ehsId == user.id && permit.ehsReviewedAt != null) {
+                                val actionType = when {
+                                    permit.status == "rejected" -> "Rejected"
+                                    permit.status == "sent_back" -> "Sent Back"
+                                    else -> "Approved"
+                                }
+                                actions.add(
+                                    PermitAction(
+                                        permitId = permit.id,
+                                        permitNumber = permit.permitNumber,
+                                        title = permit.title,
+                                        action = actionType,
+                                        timestamp = permit.ehsReviewedAt.toDate()
+                                    )
+                                )
+                            }
+                        }
+                        Role.AREA_OWNER -> {
+                            if (permit.areaOwnerId == user.id && permit.areaOwnerReviewedAt != null) {
+                                val actionType = when {
+                                    permit.status == "rejected" -> "Rejected"
+                                    permit.status == "sent_back" -> "Sent Back"
+                                    else -> "Approved"
+                                }
+                                actions.add(
+                                    PermitAction(
+                                        permitId = permit.id,
+                                        permitNumber = permit.permitNumber,
+                                        title = permit.title,
+                                        action = actionType,
+                                        timestamp = permit.areaOwnerReviewedAt.toDate()
+                                    )
+                                )
+                            }
+                        }
+                        else -> {}
+                    }
+                }
+
+                _recentActions.value = Resource.Success(actions.sortedByDescending { it.timestamp })
+            }
         }
     }
 
     fun approvePermit(permitId: String, comments: String?) {
         viewModelScope.launch {
-            _actionResult.value = Resource.Loading
+            _approvalResult.value = Resource.Loading
 
-            val user = _currentUser.value
+            val user = _currentUser.value ?: authRepository.getCurrentUser()
             if (user == null) {
-                _actionResult.value = Resource.Error("User not logged in")
+                _approvalResult.value = Resource.Error("User not logged in")
                 return@launch
             }
 
-            val role = when (user.role) {
+            val roleStr = when (user.role) {
                 Role.ISSUER -> "issuer"
                 Role.EHS_OFFICER -> "ehs"
                 Role.AREA_OWNER -> "area_owner"
                 else -> {
-                    _actionResult.value = Resource.Error("You don't have permission to approve")
+                    _approvalResult.value = Resource.Error("You don't have permission to approve")
                     return@launch
                 }
             }
 
             val result = firebaseRepository.approvePermit(
                 permitId = permitId,
-                role = role,
+                role = roleStr,
                 userId = user.id,
                 userName = user.fullName,
                 comments = comments
             )
 
-            _actionResult.value = if (result.isSuccess) {
+            _approvalResult.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
                 Resource.Error(result.exceptionOrNull()?.message ?: "Approval failed")
@@ -110,39 +218,35 @@ class ApprovalQueueViewModel @Inject constructor(
         }
     }
 
-    fun resetActionResult() {
-        _actionResult.value = Resource.Idle
-    }
-
     fun rejectPermit(permitId: String, comments: String) {
         viewModelScope.launch {
-            _actionResult.value = Resource.Loading
+            _rejectionResult.value = Resource.Loading
 
-            val user = _currentUser.value
+            val user = _currentUser.value ?: authRepository.getCurrentUser()
             if (user == null) {
-                _actionResult.value = Resource.Error("User not logged in")
+                _rejectionResult.value = Resource.Error("User not logged in")
                 return@launch
             }
 
-            val role = when (user.role) {
+            val roleStr = when (user.role) {
                 Role.ISSUER -> "issuer"
                 Role.EHS_OFFICER -> "ehs"
                 Role.AREA_OWNER -> "area_owner"
                 else -> {
-                    _actionResult.value = Resource.Error("You don't have permission to reject")
+                    _rejectionResult.value = Resource.Error("You don't have permission to reject")
                     return@launch
                 }
             }
 
             val result = firebaseRepository.rejectPermit(
                 permitId = permitId,
-                role = role,
+                role = roleStr,
                 userId = user.id,
                 userName = user.fullName,
                 comments = comments
             )
 
-            _actionResult.value = if (result.isSuccess) {
+            _rejectionResult.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
                 Resource.Error(result.exceptionOrNull()?.message ?: "Rejection failed")
@@ -152,39 +256,59 @@ class ApprovalQueueViewModel @Inject constructor(
 
     fun sendBackPermit(permitId: String, comments: String) {
         viewModelScope.launch {
-            _actionResult.value = Resource.Loading
+            _sendBackResult.value = Resource.Loading
 
-            val user = _currentUser.value
+            val user = _currentUser.value ?: authRepository.getCurrentUser()
             if (user == null) {
-                _actionResult.value = Resource.Error("User not logged in")
+                _sendBackResult.value = Resource.Error("User not logged in")
                 return@launch
             }
 
-            val role = when (user.role) {
+            val roleStr = when (user.role) {
                 Role.ISSUER -> "issuer"
                 Role.EHS_OFFICER -> "ehs"
                 Role.AREA_OWNER -> "area_owner"
                 else -> {
-                    _actionResult.value = Resource.Error("You don't have permission to send back")
+                    _sendBackResult.value = Resource.Error("You don't have permission to send back")
                     return@launch
                 }
             }
 
             val result = firebaseRepository.sendBackPermit(
                 permitId = permitId,
-                role = role,
+                role = roleStr,
                 userId = user.id,
                 userName = user.fullName,
                 comments = comments
             )
 
-            _actionResult.value = if (result.isSuccess) {
+            _sendBackResult.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
                 Resource.Error(result.exceptionOrNull()?.message ?: "Action failed")
             }
         }
     }
+
+    fun resetApprovalResult() {
+        _approvalResult.value = Resource.Idle
+    }
+
+    fun resetRejectionResult() {
+        _rejectionResult.value = Resource.Idle
+    }
+
+    fun resetSendBackResult() {
+        _sendBackResult.value = Resource.Idle
+    }
+
+    data class PermitAction(
+        val permitId: String,
+        val permitNumber: String,
+        val title: String,
+        val action: String,
+        val timestamp: Date
+    )
 
     private fun convertToPermit(model: PermitModel): Permit {
         val requester = User(
@@ -263,7 +387,46 @@ class ApprovalQueueViewModel @Inject constructor(
             approvalStage = model.approvalStage,
             issuerComments = model.issuerComments,
             ehsComments = model.ehsComments,
-            areaOwnerComments = model.areaOwnerComments
+            areaOwnerComments = model.areaOwnerComments,
+            // Checklists
+            gasTesting = model.gasTesting,
+            fireWatch = model.fireWatch,
+            sparkShields = model.sparkShields,
+            combustiblesRemoved = model.combustiblesRemoved,
+            barricading = model.barricading,
+            isolationPoints = model.isolationPoints,
+            locksApplied = model.locksApplied,
+            locksVerified = model.locksVerified,
+            zeroEnergyTest = model.zeroEnergyTest,
+            hiddenSources = model.hiddenSources,
+            oxygenLevel = model.oxygenLevel,
+            lelLevel = model.lelLevel,
+            toxicGases = model.toxicGases,
+            ventilation = model.ventilation,
+            rescueEquipment = model.rescueEquipment,
+            attendant = model.attendant,
+            rescuePlan = model.rescuePlan,
+            harnessInspection = model.harnessInspection,
+            anchorPoints = model.anchorPoints,
+            fallProtection = model.fallProtection,
+            scaffolding = model.scaffolding,
+            rescuePlanHeight = model.rescuePlanHeight,
+            loadChart = model.loadChart,
+            riggingInspection = model.riggingInspection,
+            qualifiedCrew = model.qualifiedCrew,
+            dropZone = model.dropZone,
+            windSpeed = model.windSpeed,
+            liftPlan = model.liftPlan,
+            arcFlashAssessment = model.arcFlashAssessment,
+            arcRatedPpe = model.arcRatedPpe,
+            liveWorkProcedure = model.liveWorkProcedure,
+            voltageTesting = model.voltageTesting,
+            boundaries = model.boundaries,
+            basicIsolation = model.basicIsolation,
+            correctPpe = model.correctPpe,
+            barricadingCold = model.barricadingCold,
+            spillPrevention = model.spillPrevention,
+            housekeeping = model.housekeeping
         )
     }
 

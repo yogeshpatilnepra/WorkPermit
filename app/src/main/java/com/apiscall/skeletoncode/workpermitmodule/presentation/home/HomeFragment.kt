@@ -1,6 +1,5 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.home
 
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -16,7 +15,6 @@ import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.QuickAction
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.QuickActionAdapter
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.RecentPermitsAdapter
-import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.StatCard
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.StatCardAdapter
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import com.apiscall.skeletoncode.workpermitmodule.utils.gone
@@ -58,7 +56,8 @@ class HomeFragment : Fragment() {
         // Stats RecyclerView
         statAdapter = StatCardAdapter()
         binding.rvStats.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = statAdapter
         }
 
@@ -68,29 +67,22 @@ class HomeFragment : Fragment() {
                 QuickAction.NEW_PERMIT -> {
                     findNavController().navigate(R.id.action_homeFragment_to_createPermitFragment)
                 }
+
                 QuickAction.SEARCH -> {
                     findNavController().navigate(R.id.action_homeFragment_to_searchFilterFragment)
                 }
+
                 QuickAction.SYNC -> {
                     viewModel.refreshDashboard()
                 }
             }
         }
         binding.rvQuickActions.apply {
-            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager =
+                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = quickActionAdapter
         }
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.currentUser.collectLatest { user ->
-                user?.let {
-                    val canCreatePermit = when (it.role) {
-                        Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> true
-                        else -> false
-                    }
-                    quickActionAdapter.updateNewPermitVisibility(canCreatePermit)
-                }
-            }
-        }
+
         // Recent Permits RecyclerView
         recentPermitsAdapter = RecentPermitsAdapter { permitId ->
             val action = HomeFragmentDirections.actionHomeFragmentToPermitDetailsFragment(permitId)
@@ -110,13 +102,10 @@ class HomeFragment : Fragment() {
                     binding.tvUserRole.text = it.role.name.replace("_", " ").lowercase()
                         .replaceFirstChar { char -> char.uppercase() }
 
-                    // Hide New Permit button based on role
                     val canCreatePermit = when (it.role) {
                         Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> true
                         else -> false
                     }
-
-                    // Update Quick Actions visibility - only show New Permit if allowed
                     quickActionAdapter.updateNewPermitVisibility(canCreatePermit)
                 }
             }
@@ -128,26 +117,41 @@ class HomeFragment : Fragment() {
                     is Resource.Loading -> {
                         binding.progressBar.visible()
                     }
+
                     is Resource.Success -> {
                         binding.progressBar.gone()
                         resource.data?.let { stats ->
                             statAdapter.submitList(
                                 listOf(
-                                    StatCard(
+                                    com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.StatCard(
                                         "Total",
                                         stats.totalPermits.toString(),
                                         R.drawable.ic_permits
                                     ),
-                                    StatCard("Pending", stats.pendingApprovals.toString(), R.drawable.ic_pending),
-                                    StatCard("Active", stats.activePermits.toString(), R.drawable.ic_active),
-                                    StatCard("Expiring", stats.expiringToday.toString(), R.drawable.ic_warning)
+                                    com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.StatCard(
+                                        "Pending",
+                                        stats.pendingApprovals.toString(),
+                                        R.drawable.ic_pending
+                                    ),
+                                    com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.StatCard(
+                                        "Active",
+                                        stats.activePermits.toString(),
+                                        R.drawable.ic_active
+                                    ),
+                                    com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.StatCard(
+                                        "Expiring",
+                                        stats.expiringToday.toString(),
+                                        R.drawable.ic_warning
+                                    )
                                 )
                             )
                         }
                     }
+
                     is Resource.Error -> {
                         binding.progressBar.gone()
                     }
+
                     else -> {}
                 }
             }
@@ -156,10 +160,27 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.recentPermits.collectLatest { resource ->
                 when (resource) {
-                    is Resource.Loading -> {}
-                    is Resource.Success -> {
-                        recentPermitsAdapter.submitList(resource.data)
+                    is Resource.Loading -> {
+                        // Show loading on recent permits
                     }
+
+                    is Resource.Success -> {
+                        if (resource.data.isNullOrEmpty()) {
+                            binding.rvRecentPermits.gone()
+                            binding.tvEmptyRecent.visible()
+                        } else {
+                            binding.tvEmptyRecent.gone()
+                            binding.rvRecentPermits.visible()
+                            recentPermitsAdapter.submitList(resource.data)
+                        }
+                    }
+
+                    is Resource.Error -> {
+                        binding.rvRecentPermits.gone()
+                        binding.tvEmptyRecent.visible()
+                        binding.tvEmptyRecent.text = resource.message ?: "Error loading permits"
+                    }
+
                     else -> {}
                 }
             }

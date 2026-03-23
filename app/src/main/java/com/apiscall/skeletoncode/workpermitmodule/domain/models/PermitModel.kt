@@ -2,6 +2,7 @@ package com.apiscall.skeletoncode.workpermitmodule.domain.models
 
 import android.os.Parcelable
 import com.google.firebase.Timestamp
+import com.google.firebase.firestore.PropertyName
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
@@ -11,6 +12,7 @@ data class PermitModel(
     val title: String = "",
     val permitType: String = "",
     val plant: String = "",
+    val plantCode: String = "",
     val department: String = "",
     val area: String = "",
     val company: String = "",
@@ -21,8 +23,10 @@ data class PermitModel(
     val riskAssessmentNo: String = "",
     val jsaNo: String = "",
     val jobDescription: String = "",
-    val toolboxTalkDone: Boolean = false,
-    val ppeVerified: Boolean = false,
+    
+    @JvmField val toolboxTalkDone: Boolean = false,
+    @JvmField val toolboxTalkCompleted: Boolean = false,
+    @JvmField val ppeVerified: Boolean = false,
     val status: String = "draft",
 
     // Approval Stage Tracking
@@ -43,6 +47,7 @@ data class PermitModel(
     val supervisorName: String? = null,
     val closedAt: Timestamp? = null,
     val closureComments: String? = null,
+    val comments: String? = null,
 
     // Requestor Info
     val requestorId: String = "",
@@ -54,56 +59,66 @@ data class PermitModel(
     val updatedAt: Timestamp? = null,
 
     // Checklist fields (Hot Work)
-    val gasTesting: Boolean = false,
-    val fireWatch: Boolean = false,
-    val sparkShields: Boolean = false,
-    val combustiblesRemoved: Boolean = false,
-    val barricading: Boolean = false,
+    @JvmField val gasTesting: Boolean = false,
+    @JvmField val fireWatch: Boolean = false,
+    @JvmField val fireWatchAssigned: Boolean = false,
+    @JvmField val fireExtinguisherAvailable: Boolean = false,
+    @JvmField val sparkShields: Boolean = false,
+    @JvmField val combustiblesRemoved: Boolean = false,
+    @JvmField val flammablesRemoved: Boolean = false,
+    @JvmField val barricading: Boolean = false,
+    @JvmField val areaBarricaded: Boolean = false,
+    @JvmField val postJobMonitoring: Boolean = false,
+    @JvmField val riskAssessmentAttached: Boolean = false,
+    
+    @JvmField
+    @PropertyName("stability")
+    var stability: Long = 0,
 
     // LOTO Checklist
-    val isolationPoints: Boolean = false,
-    val locksApplied: Boolean = false,
-    val locksVerified: Boolean = false,
-    val zeroEnergyTest: Boolean = false,
-    val hiddenSources: Boolean = false,
+    @JvmField val isolationPoints: Boolean = false,
+    @JvmField val locksApplied: Boolean = false,
+    @JvmField val locksVerified: Boolean = false,
+    @JvmField val zeroEnergyTest: Boolean = false,
+    @JvmField val hiddenSources: Boolean = false,
 
     // Confined Space Checklist
-    val oxygenLevel: Boolean = false,
-    val lelLevel: Boolean = false,
-    val toxicGases: Boolean = false,
-    val ventilation: Boolean = false,
-    val rescueEquipment: Boolean = false,
-    val attendant: Boolean = false,
-    val rescuePlan: Boolean = false,
+    @JvmField val oxygenLevel: Boolean = false,
+    @JvmField val lelLevel: Boolean = false,
+    @JvmField val toxicGases: Boolean = false,
+    @JvmField val ventilation: Boolean = false,
+    @JvmField val rescueEquipment: Boolean = false,
+    @JvmField val attendant: Boolean = false,
+    @JvmField val rescuePlan: Boolean = false,
 
     // Working at Height Checklist
-    val harnessInspection: Boolean = false,
-    val anchorPoints: Boolean = false,
-    val fallProtection: Boolean = false,
-    val scaffolding: Boolean = false,
-    val rescuePlanHeight: Boolean = false,
+    @JvmField val harnessInspection: Boolean = false,
+    @JvmField val anchorPoints: Boolean = false,
+    @JvmField val fallProtection: Boolean = false,
+    @JvmField val scaffolding: Boolean = false,
+    @JvmField val rescuePlanHeight: Boolean = false,
 
     // Lifting Checklist
-    val loadChart: Boolean = false,
-    val riggingInspection: Boolean = false,
-    val qualifiedCrew: Boolean = false,
-    val dropZone: Boolean = false,
-    val windSpeed: Boolean = false,
-    val liftPlan: Boolean = false,
+    @JvmField val loadChart: Boolean = false,
+    @JvmField val riggingInspection: Boolean = false,
+    @JvmField val qualifiedCrew: Boolean = false,
+    @JvmField val dropZone: Boolean = false,
+    @JvmField val windSpeed: Boolean = false,
+    @JvmField val liftPlan: Boolean = false,
 
     // Live Equipment Checklist
-    val arcFlashAssessment: Boolean = false,
-    val arcRatedPpe: Boolean = false,
-    val liveWorkProcedure: Boolean = false,
-    val voltageTesting: Boolean = false,
-    val boundaries: Boolean = false,
+    @JvmField val arcFlashAssessment: Boolean = false,
+    @JvmField val arcRatedPpe: Boolean = false,
+    @JvmField val liveWorkProcedure: Boolean = false,
+    @JvmField val voltageTesting: Boolean = false,
+    @JvmField val boundaries: Boolean = false,
 
     // Cold Work Checklist
-    val basicIsolation: Boolean = false,
-    val correctPpe: Boolean = false,
-    val barricadingCold: Boolean = false,
-    val spillPrevention: Boolean = false,
-    val housekeeping: Boolean = false
+    @JvmField val basicIsolation: Boolean = false,
+    @JvmField val correctPpe: Boolean = false,
+    @JvmField val barricadingCold: Boolean = false,
+    @JvmField val spillPrevention: Boolean = false,
+    @JvmField val housekeeping: Boolean = false
 ) : Parcelable
 
 // Approval Stage Constants

@@ -387,12 +387,6 @@ class CreatePermitFragment : Fragment() {
             isValid = false
         }
 
-        // Validate checklist for non-draft submissions
-        if (!isDraft && !checklistManager.areRequiredItemsChecked(checklistItems)) {
-            binding.root.showSnackbar("Please complete all required safety checklist items")
-            isValid = false
-        }
-
         if (!isValid) return
 
         // Get current user
@@ -406,7 +400,7 @@ class CreatePermitFragment : Fragment() {
                 // Get checklist data
                 val checklistData = checklistManager.getCheckedItems(checklistItems)
 
-                // Create permit model with all fields including checklist
+                // Create permit model
                 val permit = PermitModel(
                     title = binding.etTitle.text.toString(),
                     permitType = selectedPermitType,
@@ -421,7 +415,8 @@ class CreatePermitFragment : Fragment() {
                     riskAssessmentNo = binding.etRiskAssessmentNo.text.toString(),
                     jsaNo = binding.etJsaNo.text.toString(),
                     jobDescription = binding.etJobDescription.text.toString(),
-                    status = if (isDraft) "draft" else "issuer review",
+                    status = if (isDraft) "draft" else "submitted",
+                    approvalStage = if (isDraft) "draft" else "issuer_review", // This is key!
                     requestorId = user.id,
                     requestorName = user.fullName,
                     requestorEmail = user.email,

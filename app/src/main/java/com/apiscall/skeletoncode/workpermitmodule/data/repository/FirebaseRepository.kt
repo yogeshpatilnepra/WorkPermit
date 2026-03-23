@@ -100,7 +100,6 @@ class FirebaseRepository @Inject constructor() {
                 return Result.failure(Exception("Permit not found"))
             }
 
-            val currentStage = currentPermit.approvalStage
             val updates = mutableMapOf<String, Any>()
 
             when (role) {
@@ -144,31 +143,22 @@ class FirebaseRepository @Inject constructor() {
 
     // Reject permit
     suspend fun rejectPermit(
-        permitId: String, role: String, userId: String, userName: String, comments: String
+        permitId: String,
+        role: String,
+        userId: String,
+        userName: String,
+        comments: String
     ): Result<PermitModel> {
         return try {
             val updates = hashMapOf<String, Any>(
                 "status" to "rejected",
-                "approvalStage" to ApprovalStage.REJECTED,
-                "updatedAt" to Timestamp.now()
+                "approvalStage" to "rejected",
+                "updatedAt" to Timestamp.now(),
+                "${role}Id" to userId,
+                "${role}Name" to userName,
+                "${role}ReviewedAt" to Timestamp.now(),
+                "${role}Comments" to comments
             )
-
-            when (role) {
-                "issuer" -> {
-                    updates["issuerComments"] = comments
-                    updates["issuerReviewedAt"] = Timestamp.now()
-                }
-
-                "ehs" -> {
-                    updates["ehsComments"] = comments
-                    updates["ehsReviewedAt"] = Timestamp.now()
-                }
-
-                "area_owner" -> {
-                    updates["areaOwnerComments"] = comments
-                    updates["areaOwnerReviewedAt"] = Timestamp.now()
-                }
-            }
 
             permitsCollection.document(permitId).update(updates).await()
 
@@ -246,7 +236,7 @@ class FirebaseRepository @Inject constructor() {
             val storageRef = storage.reference.child("permits").child(permitId).child("attachments")
                 .child(fileName)
 
-            val uploadTask = storageRef.putFile(android.net.Uri.fromFile(file)).await()
+            storageRef.putFile(android.net.Uri.fromFile(file)).await()
             val downloadUrl = storageRef.downloadUrl.await()
             Result.success(downloadUrl.toString())
         } catch (e: Exception) {
@@ -293,16 +283,19 @@ class FirebaseRepository @Inject constructor() {
             Result.failure(e)
         }
     }
+
     fun getPermitsByApprovalStageFlow(stage: String): Flow<List<PermitModel>> {
+        val excludedStatuses = listOf("rejected", "sent_back", "closed")
+        
+        // Failsafe query to avoid all composite index requirements
+        // We fetch all documents (ordered by creation date) and filter in memory.
+        // This is safe for moderate datasets and guarantees no "missing index" errors.
         return permitsCollection
-            .whereEqualTo("approvalStage", stage)
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .snapshots()
             .map { snapshot ->
-                val allPermits = snapshot.toObjects(PermitModel::class.java)
-                // Filter out rejected and sent back permits
-                allPermits.filter { permit ->
-                    permit.status != "rejected" && permit.status != "sent_back"
+                snapshot.toObjects(PermitModel::class.java).filter { model ->
+                    model.approvalStage == stage && model.status !in excludedStatuses
                 }
             }
     }

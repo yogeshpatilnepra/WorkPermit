@@ -58,7 +58,7 @@
     <fragment
         android:id="@+id/approvalQueueFragment"
         android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.approvals.ApprovalQueueFragment"
-        android:label="Pending Approvals"
+        android:label="Approvals"
         tools:layout="@layout/fragment_approval_queue">
         <action
             android:id="@+id/action_approvalQueueFragment_to_permitDetailsFragment"

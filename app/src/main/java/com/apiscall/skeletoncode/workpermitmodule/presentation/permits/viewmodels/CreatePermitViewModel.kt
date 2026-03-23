@@ -1,6 +1,5 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.permits.viewmodels
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
@@ -17,8 +16,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CreatePermitViewModel @Inject constructor(
-    private val firebaseRepository: FirebaseRepository,
-    private val authRepository: AuthRepository
+    private val firebaseRepository: FirebaseRepository, private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _createResult = MutableStateFlow<Resource<PermitModel>>(Resource.Idle)
@@ -41,7 +39,12 @@ class CreatePermitViewModel @Inject constructor(
         viewModelScope.launch {
             _createResult.value = Resource.Loading
 
-            val result = firebaseRepository.createPermit(permit)
+            // Set the approval stage to "issuer_review" so it appears in Issuer's pending approvals
+            val permitWithStage = permit.copy(
+                approvalStage = "issuer_review", status = "submitted"
+            )
+
+            val result = firebaseRepository.createPermit(permitWithStage)
 
             _createResult.value = if (result.isSuccess) {
                 Resource.Success(result.getOrNull()!!)
