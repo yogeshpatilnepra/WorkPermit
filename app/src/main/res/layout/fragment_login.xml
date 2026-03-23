@@ -77,7 +77,6 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="contractor1 / password123"
                         android:textColor="@color/safety_blue"
                         android:textSize="14sp"
                         android:textStyle="bold"

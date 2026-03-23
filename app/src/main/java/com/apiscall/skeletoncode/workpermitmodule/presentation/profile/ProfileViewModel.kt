@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
-import com.apiscall.skeletoncode.workpermitmodule.domain.repository.UserRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +15,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val authRepository: AuthRepository,
-    private val userRepository: UserRepository
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _userProfile = MutableStateFlow<Resource<User>>(Resource.Loading)
@@ -29,15 +27,9 @@ class ProfileViewModel @Inject constructor(
     fun loadUserProfile() {
         viewModelScope.launch {
             _userProfile.value = Resource.Loading
-            val currentUser = authRepository.getCurrentUser()
-            if (currentUser != null) {
-                userRepository.getUserById(currentUser.id).collect { user ->
-                    if (user != null) {
-                        _userProfile.value = Resource.Success(user)
-                    } else {
-                        _userProfile.value = Resource.Error("User not found")
-                    }
-                }
+            val user = authRepository.getCurrentUser()
+            if (user != null) {
+                _userProfile.value = Resource.Success(user)
             } else {
                 _userProfile.value = Resource.Error("User not logged in")
             }
@@ -47,8 +39,12 @@ class ProfileViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             _logoutResult.value = Resource.Loading
-            authRepository.logout()
-            _logoutResult.value = Resource.Success(true)
+            try {
+                authRepository.logout()
+                _logoutResult.value = Resource.Success(true)
+            } catch (e: Exception) {
+                _logoutResult.value = Resource.Error(e.message ?: "Logout failed")
+            }
         }
     }
 }

@@ -1,10 +1,14 @@
-package com.apiscall.skeletoncode.workpermitmodule.presentation.permits.viewmodels
-
+package com.apiscall.skeletoncode.workpermitmodule.presentation.approvals
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
-import com.apiscall.skeletoncode.workpermitmodule.domain.models.*
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,19 +20,19 @@ import java.util.Date
 import javax.inject.Inject
 
 @HiltViewModel
-class PermitDetailViewModel @Inject constructor(
+class ApprovalQueueViewModel @Inject constructor(
     private val firebaseRepository: FirebaseRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _permitDetails = MutableStateFlow<Resource<Permit>>(Resource.Loading)
-    val permitDetails: StateFlow<Resource<Permit>> = _permitDetails.asStateFlow()
-
-    private val _actionResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
-    val actionResult: StateFlow<Resource<Boolean>> = _actionResult.asStateFlow()
+    private val _pendingApprovals = MutableStateFlow<Resource<List<Permit>>>(Resource.Loading)
+    val pendingApprovals: StateFlow<Resource<List<Permit>>> = _pendingApprovals.asStateFlow()
 
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
+
+    private val _actionResult = MutableStateFlow<Resource<Boolean>>(Resource.Idle)
+    val actionResult: StateFlow<Resource<Boolean>> = _actionResult.asStateFlow()
 
     init {
         loadCurrentUser()
@@ -40,26 +44,64 @@ class PermitDetailViewModel @Inject constructor(
         }
     }
 
-    fun loadPermitDetails(permitId: String) {
+    fun loadPendingApprovals() {
         viewModelScope.launch {
-            _permitDetails.value = Resource.Loading
+            _pendingApprovals.value = Resource.Loading
 
-            firebaseRepository.getPermitById(permitId).collect { permitModel ->
-                if (permitModel != null) {
-                    val permit = convertToPermit(permitModel)
-                    _permitDetails.value = Resource.Success(permit)
-                } else {
-                    _permitDetails.value = Resource.Error("Permit not found")
-                }
+            val user = _currentUser.value
+            if (user == null) {
+                _pendingApprovals.value = Resource.Error("User not logged in")
+                return@launch
             }
+
+            val approvalStage = when (user.role) {
+                Role.ISSUER -> "issuer_review"
+                Role.EHS_OFFICER -> "ehs_review"
+                Role.AREA_OWNER -> "area_owner_review"
+                else -> null
+            }
+
+            if (approvalStage == null) {
+                _pendingApprovals.value = Resource.Success(emptyList())
+                return@launch
+            }
+
+            firebaseRepository.getPermitsByApprovalStageFlow(approvalStage)
+                .collect { permitModels ->
+                    val permits = permitModels.map { convertToPermit(it) }
+                    _pendingApprovals.value = Resource.Success(permits)
+                }
         }
     }
 
-    fun approvePermit(permitId: String, role: String, comments: String?) {
+    fun approvePermit(permitId: String, comments: String?) {
         viewModelScope.launch {
             _actionResult.value = Resource.Loading
-            val user = _currentUser.value ?: return@launch
-            val result = firebaseRepository.approvePermit(permitId, role, user.id, user.fullName, comments)
+
+            val user = _currentUser.value
+            if (user == null) {
+                _actionResult.value = Resource.Error("User not logged in")
+                return@launch
+            }
+
+            val role = when (user.role) {
+                Role.ISSUER -> "issuer"
+                Role.EHS_OFFICER -> "ehs"
+                Role.AREA_OWNER -> "area_owner"
+                else -> {
+                    _actionResult.value = Resource.Error("You don't have permission to approve")
+                    return@launch
+                }
+            }
+
+            val result = firebaseRepository.approvePermit(
+                permitId = permitId,
+                role = role,
+                userId = user.id,
+                userName = user.fullName,
+                comments = comments
+            )
+
             _actionResult.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
@@ -68,11 +110,38 @@ class PermitDetailViewModel @Inject constructor(
         }
     }
 
-    fun rejectPermit(permitId: String, role: String, comments: String) {
+    fun resetActionResult() {
+        _actionResult.value = Resource.Idle
+    }
+
+    fun rejectPermit(permitId: String, comments: String) {
         viewModelScope.launch {
             _actionResult.value = Resource.Loading
-            val user = _currentUser.value ?: return@launch
-            val result = firebaseRepository.rejectPermit(permitId, role, user.id, user.fullName, comments)
+
+            val user = _currentUser.value
+            if (user == null) {
+                _actionResult.value = Resource.Error("User not logged in")
+                return@launch
+            }
+
+            val role = when (user.role) {
+                Role.ISSUER -> "issuer"
+                Role.EHS_OFFICER -> "ehs"
+                Role.AREA_OWNER -> "area_owner"
+                else -> {
+                    _actionResult.value = Resource.Error("You don't have permission to reject")
+                    return@launch
+                }
+            }
+
+            val result = firebaseRepository.rejectPermit(
+                permitId = permitId,
+                role = role,
+                userId = user.id,
+                userName = user.fullName,
+                comments = comments
+            )
+
             _actionResult.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
@@ -81,53 +150,38 @@ class PermitDetailViewModel @Inject constructor(
         }
     }
 
-    fun sendBackPermit(permitId: String, role: String, comments: String) {
+    fun sendBackPermit(permitId: String, comments: String) {
         viewModelScope.launch {
             _actionResult.value = Resource.Loading
-            val user = _currentUser.value ?: return@launch
-            val result = firebaseRepository.sendBackPermit(permitId, role, user.id, user.fullName, comments)
+
+            val user = _currentUser.value
+            if (user == null) {
+                _actionResult.value = Resource.Error("User not logged in")
+                return@launch
+            }
+
+            val role = when (user.role) {
+                Role.ISSUER -> "issuer"
+                Role.EHS_OFFICER -> "ehs"
+                Role.AREA_OWNER -> "area_owner"
+                else -> {
+                    _actionResult.value = Resource.Error("You don't have permission to send back")
+                    return@launch
+                }
+            }
+
+            val result = firebaseRepository.sendBackPermit(
+                permitId = permitId,
+                role = role,
+                userId = user.id,
+                userName = user.fullName,
+                comments = comments
+            )
+
             _actionResult.value = if (result.isSuccess) {
                 Resource.Success(true)
             } else {
                 Resource.Error(result.exceptionOrNull()?.message ?: "Action failed")
-            }
-        }
-    }
-
-    fun closePermit(permitId: String, comments: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            val user = _currentUser.value ?: return@launch
-            val result = firebaseRepository.closePermit(permitId, user.id, user.fullName, comments)
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Failed to close permit")
-            }
-        }
-    }
-
-    fun workerSignIn(permitId: String, workerName: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            // Update permit status to active if not already
-            val result = firebaseRepository.updatePermitStatus(permitId, "active", "Worker $workerName signed in")
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Sign in failed")
-            }
-        }
-    }
-
-    fun workerSignOut(permitId: String, workerName: String) {
-        viewModelScope.launch {
-            _actionResult.value = Resource.Loading
-            val result = firebaseRepository.updatePermitStatus(permitId, "active", "Worker $workerName signed out")
-            _actionResult.value = if (result.isSuccess) {
-                Resource.Success(true)
-            } else {
-                Resource.Error(result.exceptionOrNull()?.message ?: "Sign out failed")
             }
         }
     }
@@ -209,39 +263,7 @@ class PermitDetailViewModel @Inject constructor(
             approvalStage = model.approvalStage,
             issuerComments = model.issuerComments,
             ehsComments = model.ehsComments,
-            areaOwnerComments = model.areaOwnerComments,
-            // Hot Work Checklist
-            gasTesting = model.gasTesting,
-            fireWatch = model.fireWatch,
-            sparkShields = model.sparkShields,
-            combustiblesRemoved = model.combustiblesRemoved,
-            barricading = model.barricading,
-            // LOTO Checklist
-            isolationPoints = model.isolationPoints,
-            locksApplied = model.locksApplied,
-            zeroEnergyTest = model.zeroEnergyTest,
-            // Confined Space Checklist
-            oxygenLevel = model.oxygenLevel,
-            ventilation = model.ventilation,
-            rescueEquipment = model.rescueEquipment,
-            attendant = model.attendant,
-            // Work at Height Checklist
-            harnessInspection = model.harnessInspection,
-            anchorPoints = model.anchorPoints,
-            fallProtection = model.fallProtection,
-            // Lifting Checklist
-            loadChart = model.loadChart,
-            riggingInspection = model.riggingInspection,
-            qualifiedCrew = model.qualifiedCrew,
-            dropZone = model.dropZone,
-            // Live Equipment Checklist
-            arcFlashAssessment = model.arcFlashAssessment,
-            arcRatedPpe = model.arcRatedPpe,
-            voltageTesting = model.voltageTesting,
-            // Cold Work Checklist
-            basicIsolation = model.basicIsolation,
-            correctPpe = model.correctPpe,
-            housekeeping = model.housekeeping
+            areaOwnerComments = model.areaOwnerComments
         )
     }
 

@@ -1,6 +1,5 @@
 package com.apiscall.skeletoncode.workpermitmodule.domain.models
 
-
 import android.os.Parcelable
 import com.google.firebase.Timestamp
 import kotlinx.parcelize.Parcelize
@@ -25,14 +24,36 @@ data class PermitModel(
     val toolboxTalkDone: Boolean = false,
     val ppeVerified: Boolean = false,
     val status: String = "draft",
+
+    // Approval Stage Tracking
+    val approvalStage: String = "issuer_review", // issuer_review, ehs_review, area_owner_review, issued, closed
+    val issuerId: String? = null,
+    val issuerName: String? = null,
+    val issuerReviewedAt: Timestamp? = null,
+    val issuerComments: String? = null,
+    val ehsId: String? = null,
+    val ehsName: String? = null,
+    val ehsReviewedAt: Timestamp? = null,
+    val ehsComments: String? = null,
+    val areaOwnerId: String? = null,
+    val areaOwnerName: String? = null,
+    val areaOwnerReviewedAt: Timestamp? = null,
+    val areaOwnerComments: String? = null,
+    val supervisorId: String? = null,
+    val supervisorName: String? = null,
+    val closedAt: Timestamp? = null,
+    val closureComments: String? = null,
+
+    // Requestor Info
     val requestorId: String = "",
     val requestorName: String = "",
     val requestorEmail: String = "",
+
+    // Timestamps
     val createdAt: Timestamp? = null,
     val updatedAt: Timestamp? = null,
-    val plantCode: String = "",
 
-    // Hot Work Checklist
+    // Checklist fields (Hot Work)
     val gasTesting: Boolean = false,
     val fireWatch: Boolean = false,
     val sparkShields: Boolean = false,
@@ -84,3 +105,15 @@ data class PermitModel(
     val spillPrevention: Boolean = false,
     val housekeeping: Boolean = false
 ) : Parcelable
+
+// Approval Stage Constants
+object ApprovalStage {
+    const val ISSUER_REVIEW = "issuer_review"
+    const val EHS_REVIEW = "ehs_review"
+    const val AREA_OWNER_REVIEW = "area_owner_review"
+    const val ISSUED = "issued"
+    const val ACTIVE = "active"
+    const val CLOSED = "closed"
+    const val REJECTED = "rejected"
+    const val SENT_BACK = "sent_back"
+}

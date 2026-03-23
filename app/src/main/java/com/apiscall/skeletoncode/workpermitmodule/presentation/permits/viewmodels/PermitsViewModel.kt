@@ -1,10 +1,12 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.permits.viewmodels
 
-
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
@@ -61,16 +63,34 @@ class PermitsViewModel @Inject constructor(
 
                 _permits.value = Resource.Loading
 
-                firebaseRepository.getFilteredPermitsFlow(
-                    plant = plant,
-                    status = status,
-                    type = type,
-                    searchQuery = query
-                ).collect { permitModels ->
-                    // Convert PermitModel to Permit (your domain model)
-                    val permits = permitModels.map { model ->
-                        convertToPermit(model)
+                // Get all permits first, then apply filters locally
+                firebaseRepository.getPermitsFlow().collect { permitModels ->
+                    var filtered = permitModels
+
+                    // Apply plant filter
+                    if (plant != "All Plants") {
+                        filtered = filtered.filter { it.plant == plant }
                     }
+
+                    // Apply status filter
+                    if (status != "all") {
+                        filtered = filtered.filter { it.status == status }
+                    }
+
+                    // Apply type filter
+                    if (type != "All Types") {
+                        filtered = filtered.filter { it.permitType == type }
+                    }
+
+                    // Apply search query
+                    if (query.isNotEmpty()) {
+                        filtered = filtered.filter {
+                            it.permitNumber.contains(query, ignoreCase = true) ||
+                                    it.title.contains(query, ignoreCase = true)
+                        }
+                    }
+
+                    val permits = filtered.map { convertToPermit(it) }
                     _permits.value = Resource.Success(permits)
                 }
             }
@@ -113,17 +133,28 @@ class PermitsViewModel @Inject constructor(
         }
     }
 
-    private fun convertToPermit(model: com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel): Permit {
-        // Create a mock user for the requester (you should fetch actual user from your user repository)
+    private fun convertToPermit(model: PermitModel): Permit {
         val requester = User(
             id = model.requestorId,
             username = "",
             email = model.requestorEmail,
             fullName = model.requestorName,
             role = Role.REQUESTOR,
-            department = "",
+            department = model.department,
             employeeId = ""
         )
+
+        val issuer = if (model.issuerId != null) {
+            User(
+                id = model.issuerId,
+                username = "",
+                email = "",
+                fullName = model.issuerName ?: "",
+                role = Role.ISSUER,
+                department = "",
+                employeeId = ""
+            )
+        } else null
 
         return Permit(
             id = model.id,
@@ -133,6 +164,7 @@ class PermitsViewModel @Inject constructor(
             description = model.jobDescription,
             status = getPermitStatusFromString(model.status),
             requester = requester,
+            issuer = issuer,
             location = model.area,
             plant = model.plant,
             department = model.department,
@@ -148,35 +180,39 @@ class PermitsViewModel @Inject constructor(
             riskAssessmentNo = model.riskAssessmentNo,
             jsaNo = model.jsaNo,
             toolboxTalkDone = model.toolboxTalkDone,
-            ppeVerified = model.ppeVerified
+            ppeVerified = model.ppeVerified,
+            approvalStage = model.approvalStage,
+            issuerComments = model.issuerComments,
+            ehsComments = model.ehsComments,
+            areaOwnerComments = model.areaOwnerComments
         )
     }
 
-    private fun getPermitTypeFromString(type: String): com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType {
+    private fun getPermitTypeFromString(type: String): PermitType {
         return when (type.lowercase()) {
-            "hot work" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.HOT_WORK
-            "cold work" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.COLD_WORK
-            "loto" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.LOTO
-            "confined space" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.CONFINED_SPACE
-            "working at height" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.WORK_AT_HEIGHT
-            "lifting" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.LIFTING
-            "live equipment" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.LIVE_EQUIPMENT
-            else -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType.HOT_WORK
+            "hot work" -> PermitType.HOT_WORK
+            "cold work" -> PermitType.COLD_WORK
+            "loto" -> PermitType.LOTO
+            "confined space" -> PermitType.CONFINED_SPACE
+            "working at height" -> PermitType.WORK_AT_HEIGHT
+            "lifting" -> PermitType.LIFTING
+            "live equipment" -> PermitType.LIVE_EQUIPMENT
+            else -> PermitType.HOT_WORK
         }
     }
 
-    private fun getPermitStatusFromString(status: String): com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus {
+    private fun getPermitStatusFromString(status: String): PermitStatus {
         return when (status.lowercase()) {
-            "draft" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.DRAFT
-            "issuer review" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.PENDING_ISSUER_APPROVAL
-            "ehs review" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.PENDING_EHS_APPROVAL
-            "area owner review" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.PENDING_AREA_OWNER_APPROVAL
-            "issued" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.APPROVED
-            "in progress" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.ACTIVE
-            "closed" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.CLOSED
-            "rejected" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.REJECTED
-            "expired" -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.EXPIRED
-            else -> com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus.DRAFT
+            "draft" -> PermitStatus.DRAFT
+            "submitted", "issuer_review" -> PermitStatus.PENDING_ISSUER_APPROVAL
+            "ehs_review" -> PermitStatus.PENDING_EHS_APPROVAL
+            "area_owner_review" -> PermitStatus.PENDING_AREA_OWNER_APPROVAL
+            "issued" -> PermitStatus.APPROVED
+            "active" -> PermitStatus.ACTIVE
+            "closed" -> PermitStatus.CLOSED
+            "rejected" -> PermitStatus.REJECTED
+            "sent_back" -> PermitStatus.SENT_BACK
+            else -> PermitStatus.DRAFT
         }
     }
 }

@@ -49,21 +49,22 @@
             app:destination="@id/searchFilterFragment" />
         <action
             android:id="@+id/action_homeFragment_to_permitDetailsFragment"
-            app:destination="@id/permitDetailsFragment"
-            app:popUpTo="@id/homeFragment" />
-    </fragment>
-    <fragment
-        android:id="@+id/permitsFragment"
-        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.PermitsFragment"
-        android:label="Permits"
-        tools:layout="@layout/fragment_permits">
-        <action
-            android:id="@+id/action_permitsFragment_to_permitDetailsFragment"
             app:destination="@id/permitDetailsFragment" />
         <action
-            android:id="@+id/action_permitsFragment_to_createPermitFragment"
-            app:destination="@id/createPermitFragment" />
+            android:id="@+id/action_homeFragment_to_approvalQueueFragment"
+            app:destination="@id/approvalQueueFragment" />
     </fragment>
+
+    <fragment
+        android:id="@+id/approvalQueueFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.approvals.ApprovalQueueFragment"
+        android:label="Pending Approvals"
+        tools:layout="@layout/fragment_approval_queue">
+        <action
+            android:id="@+id/action_approvalQueueFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
+    </fragment>
+
     <fragment
         android:id="@+id/myPermitsFragment"
         android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.MyPermitsFragment"
@@ -123,6 +124,11 @@
         <action
             android:id="@+id/action_permitDetailsFragment_to_permitClosureFragment"
             app:destination="@id/permitClosureFragment" />
+        <action
+            android:id="@+id/action_permitDetailsFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -133,6 +139,11 @@
         <action
             android:id="@+id/action_createPermitFragment_to_dynamicFormFragment"
             app:destination="@id/dynamicFormFragment" />
+        <action
+            android:id="@+id/action_createPermitFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -140,10 +151,14 @@
         android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.DynamicFormFragment"
         android:label="Permit Form"
         tools:layout="@layout/fragment_dynamic_form">
-
         <argument
             android:name="permitType"
             app:argType="com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType" />
+        <action
+            android:id="@+id/action_dynamicFormFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -154,6 +169,9 @@
         <argument
             android:name="permitId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_uploadAttachmentFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
     </fragment>
 
     <fragment
@@ -164,7 +182,11 @@
         <action
             android:id="@+id/action_QRScanFragment_to_permitDetailsFragment"
             app:destination="@id/permitDetailsFragment" />
-
+        <action
+            android:id="@+id/action_QRScanFragment_to_homeFragment"
+            app:destination="@id/homeFragment"
+            app:popUpTo="@id/homeFragment"
+            app:popUpToInclusive="true" />
     </fragment>
 
     <fragment
@@ -175,6 +197,9 @@
         <argument
             android:name="permitId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_workerSignInFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
     </fragment>
 
     <fragment
@@ -185,6 +210,9 @@
         <argument
             android:name="permitId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_workerSignOutFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
     </fragment>
 
     <fragment
@@ -195,6 +223,9 @@
         <argument
             android:name="permitId"
             app:argType="string" />
+        <action
+            android:id="@+id/action_permitClosureFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
     </fragment>
 
     <fragment
@@ -208,6 +239,19 @@
         android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.search.SearchFilterFragment"
         android:label="Search &amp; Filter"
         tools:layout="@layout/fragment_search_filter" />
+
+    <fragment
+        android:id="@+id/permitsFragment"
+        android:name="com.apiscall.skeletoncode.workpermitmodule.presentation.permits.PermitsFragment"
+        android:label="Permits"
+        tools:layout="@layout/fragment_permits">
+        <action
+            android:id="@+id/action_permitsFragment_to_permitDetailsFragment"
+            app:destination="@id/permitDetailsFragment" />
+        <action
+            android:id="@+id/action_permitsFragment_to_createPermitFragment"
+            app:destination="@id/createPermitFragment" />
+    </fragment>
 
     <fragment
         android:id="@+id/profileFragment"

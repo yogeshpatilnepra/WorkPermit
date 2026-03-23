@@ -91,7 +91,11 @@ data class Permit(
     val correctPpe: Boolean = false,
     val barricadingCold: Boolean = false,
     val spillPrevention: Boolean = false,
-    val housekeeping: Boolean = false
+    val housekeeping: Boolean = false,
+    val approvalStage: String = "issuer_review",
+    val issuerComments: String? = null,
+    val ehsComments: String? = null,
+    val areaOwnerComments: String? = null
 ) : Parcelable
 
 enum class PermitStatus {
@@ -103,7 +107,8 @@ enum class PermitStatus {
     REJECTED,
     ACTIVE,
     CLOSED,
-    EXPIRED
+    EXPIRED,
+    SENT_BACK
 }
 
 enum class PermitType {

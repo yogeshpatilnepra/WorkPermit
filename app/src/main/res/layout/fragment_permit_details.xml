@@ -51,14 +51,12 @@
                     android:visibility="visible"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <!-- Status Chip -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="wrap_content"
+                    <!-- Status Chip - Fixed width to wrap content -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        android:elevation="0dp"
-                        app:cardCornerRadius="16dp"
-                        app:cardElevation="0dp">
+                        android:orientation="horizontal">
 
                         <TextView
                             android:id="@+id/tvStatus"
@@ -71,9 +69,22 @@
                             android:textSize="14sp"
                             android:textStyle="bold" />
 
-                    </com.google.android.material.card.MaterialCardView>
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="0dp"
+                            android:layout_weight="1" />
 
-                    <!-- Permit Header -->
+                        <TextView
+                            android:id="@+id/tvApprovalStage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Stage 1/3"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+
+                    </LinearLayout>
+
+                    <!-- Permit Header Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -120,7 +131,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="8dp"
-                                android:text="Hot work permit for welding repairs at reactor R-101"
+                                android:text="Hot work permit for welding repairs"
                                 android:textColor="@color/text_secondary"
                                 android:textSize="14sp" />
 
@@ -128,7 +139,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Location & Dates -->
+                    <!-- Location & Work Details Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -145,21 +156,86 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Location"
+                                android:text="Work Details"
                                 android:textColor="@color/text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
-                            <TextView
-                                android:id="@+id/tvLocation"
+                            <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="4dp"
-                                android:drawablePadding="8dp"
-                                android:text="Reactor Area - Unit A"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="14sp"
-                                app:drawableStartCompat="@drawable/ic_location" />
+                                android:layout_marginTop="12dp"
+                                android:orientation="vertical">
+
+                                <TextView
+                                    android:id="@+id/tvPlant"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:drawablePadding="8dp"
+                                    android:text="Plant: Sulzer Pump Plant 1"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp"
+                                    app:drawableStartCompat="@drawable/ic_factory" />
+
+                                <TextView
+                                    android:id="@+id/tvLocation"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:drawablePadding="8dp"
+                                    android:text="Location: Reactor Area"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp"
+                                    app:drawableStartCompat="@drawable/ic_location" />
+
+                                <TextView
+                                    android:id="@+id/tvDepartment"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:drawablePadding="8dp"
+                                    android:text="Department: Maintenance"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp"
+                                    app:drawableStartCompat="@drawable/ic_department" />
+
+                                <TextView
+                                    android:id="@+id/tvArea"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="Area: CNC Zone"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvCompany"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="Company: In-house"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvShift"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="Shift: Morning"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp" />
+
+                                <TextView
+                                    android:id="@+id/tvWorkerCount"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="8dp"
+                                    android:text="Worker Count: 2"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="14sp" />
+
+                            </LinearLayout>
 
                             <View
                                 android:layout_width="match_parent"
@@ -170,9 +246,9 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Validity Period"
+                                android:text="Schedule"
                                 android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:textSize="14sp"
                                 android:textStyle="bold" />
 
                             <LinearLayout
@@ -190,7 +266,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="Start Date"
+                                        android:text="Start"
                                         android:textColor="@color/text_secondary"
                                         android:textSize="12sp" />
 
@@ -215,7 +291,7 @@
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
-                                        android:text="End Date"
+                                        android:text="End"
                                         android:textColor="@color/text_secondary"
                                         android:textSize="12sp" />
 
@@ -237,7 +313,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Requester Info -->
+                    <!-- Requester Info Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -254,7 +330,7 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Requester"
+                                android:text="Requester Information"
                                 android:textColor="@color/text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -296,6 +372,15 @@
                                         android:textColor="@color/text_secondary"
                                         android:textSize="14sp" />
 
+                                    <TextView
+                                        android:id="@+id/tvRequesterEmail"
+                                        android:layout_width="wrap_content"
+                                        android:layout_height="wrap_content"
+                                        android:layout_marginTop="4dp"
+                                        android:text="john@example.com"
+                                        android:textColor="@color/text_secondary"
+                                        android:textSize="12sp" />
+
                                 </LinearLayout>
 
                             </LinearLayout>
@@ -304,7 +389,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Form Data -->
+                    <!-- Documents Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -321,14 +406,105 @@
                             <TextView
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Permit Details"
+                                android:text="Documents"
                                 android:textColor="@color/text_primary"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
 
-                            <!-- Dynamic form data will be populated here -->
+                            <TextView
+                                android:id="@+id/tvRiskAssessmentNo"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:text="Risk Assessment No: RA-123"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                            <TextView
+                                android:id="@+id/tvJsaNo"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:text="JSA No: JSA-456"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="14sp" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Safety Verification Card - Only shows if data exists -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardSafetyVerification"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Safety Verification"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
+                            <com.google.android.material.checkbox.MaterialCheckBox
+                                android:id="@+id/cbToolboxTalkDone"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="12dp"
+                                android:enabled="false"
+                                android:text="Toolbox Talk Completed"
+                                android:visibility="gone" />
+
+                            <com.google.android.material.checkbox.MaterialCheckBox
+                                android:id="@+id/cbPpeVerified"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:enabled="false"
+                                android:text="PPE Verified"
+                                android:visibility="gone" />
+
+                        </LinearLayout>
+
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Permit-Specific Checklist Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/cardChecklist"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        android:visibility="gone"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:text="Permit-Specific Checklist"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+
                             <LinearLayout
-                                android:id="@+id/formDataContainer"
+                                android:id="@+id/checklistContainer"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="12dp"
@@ -338,7 +514,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Attachments -->
+                    <!-- Attachments Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -382,44 +558,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Workers Section -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/workersSection"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:visibility="gone"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Workers"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvWorkersCount"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="3 workers signed in"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="14sp" />
-
-                        </LinearLayout>
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Approval History -->
+                    <!-- Approval History Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -453,7 +592,7 @@
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Approval Actions -->
+                    <!-- Approval Actions (Approve/Reject/Send Back) -->
                     <LinearLayout
                         android:id="@+id/approvalActions"
                         android:layout_width="match_parent"
@@ -464,7 +603,7 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnApprove"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/safety_green"
@@ -473,7 +612,7 @@
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnReject"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/safety_red"
@@ -489,30 +628,48 @@
 
                     </LinearLayout>
 
-                    <!-- Active Permit Actions -->
+                    <!-- Closure Actions (For Supervisor to Close Permit) -->
                     <LinearLayout
-                        android:id="@+id/activeActions"
+                        android:id="@+id/closureActions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:visibility="gone">
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnStartWork"
+                            android:id="@+id/btnClosePermitClosure"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
+                            android:backgroundTint="@color/safety_blue"
+                            android:text="Close Permit" />
+
+                    </LinearLayout>
+
+                    <!-- Worker Actions (Sign In/Sign Out) -->
+                    <LinearLayout
+                        android:id="@+id/workerActions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSignInWorker"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_marginEnd="8dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/safety_green"
-                            android:text="Sign In Worker" />
+                            android:text="Sign In Worker"
+                            android:visibility="gone" />
 
                         <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnClosePermit"
+                            android:id="@+id/btnSignOutWorker"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="48dp"
                             android:layout_weight="1"
-                            android:backgroundTint="@color/safety_blue"
-                            android:text="Close Permit"
+                            android:backgroundTint="@color/safety_orange"
+                            android:text="Sign Out Worker"
                             android:visibility="gone" />
 
                     </LinearLayout>

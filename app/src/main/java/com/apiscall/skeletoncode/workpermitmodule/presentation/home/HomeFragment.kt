@@ -12,6 +12,7 @@ import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.apiscall.skeletoncode.R
 import com.apiscall.skeletoncode.databinding.FragmentHomeBinding
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.QuickAction
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.QuickActionAdapter
 import com.apiscall.skeletoncode.workpermitmodule.presentation.home.adapters.RecentPermitsAdapter
@@ -57,8 +58,7 @@ class HomeFragment : Fragment() {
         // Stats RecyclerView
         statAdapter = StatCardAdapter()
         binding.rvStats.apply {
-            layoutManager =
-                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = statAdapter
         }
 
@@ -68,26 +68,29 @@ class HomeFragment : Fragment() {
                 QuickAction.NEW_PERMIT -> {
                     findNavController().navigate(R.id.action_homeFragment_to_createPermitFragment)
                 }
-
-//                QuickAction.SCAN_QR -> {
-//                    findNavController().navigate(R.id.action_homeFragment_to_qrScanFragment)
-//                }
-
                 QuickAction.SEARCH -> {
                     findNavController().navigate(R.id.action_homeFragment_to_searchFilterFragment)
                 }
-
                 QuickAction.SYNC -> {
                     viewModel.refreshDashboard()
                 }
             }
         }
         binding.rvQuickActions.apply {
-            layoutManager =
-                LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = quickActionAdapter
         }
-
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.currentUser.collectLatest { user ->
+                user?.let {
+                    val canCreatePermit = when (it.role) {
+                        Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> true
+                        else -> false
+                    }
+                    quickActionAdapter.updateNewPermitVisibility(canCreatePermit)
+                }
+            }
+        }
         // Recent Permits RecyclerView
         recentPermitsAdapter = RecentPermitsAdapter { permitId ->
             val action = HomeFragmentDirections.actionHomeFragmentToPermitDetailsFragment(permitId)
@@ -106,6 +109,15 @@ class HomeFragment : Fragment() {
                     binding.tvUserName.text = it.fullName
                     binding.tvUserRole.text = it.role.name.replace("_", " ").lowercase()
                         .replaceFirstChar { char -> char.uppercase() }
+
+                    // Hide New Permit button based on role
+                    val canCreatePermit = when (it.role) {
+                        Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> true
+                        else -> false
+                    }
+
+                    // Update Quick Actions visibility - only show New Permit if allowed
+                    quickActionAdapter.updateNewPermitVisibility(canCreatePermit)
                 }
             }
         }
@@ -116,7 +128,6 @@ class HomeFragment : Fragment() {
                     is Resource.Loading -> {
                         binding.progressBar.visible()
                     }
-
                     is Resource.Success -> {
                         binding.progressBar.gone()
                         resource.data?.let { stats ->
@@ -127,31 +138,16 @@ class HomeFragment : Fragment() {
                                         stats.totalPermits.toString(),
                                         R.drawable.ic_permits
                                     ),
-                                    StatCard(
-                                        "Pending",
-                                        stats.pendingApprovals.toString(),
-                                        R.drawable.ic_pending
-                                    ),
-                                    StatCard(
-                                        "Active",
-                                        stats.activePermits.toString(),
-                                        R.drawable.ic_active
-                                    ),
-                                    StatCard(
-                                        "Expiring",
-                                        stats.expiringToday.toString(),
-                                        R.drawable.ic_warning
-                                    )
+                                    StatCard("Pending", stats.pendingApprovals.toString(), R.drawable.ic_pending),
+                                    StatCard("Active", stats.activePermits.toString(), R.drawable.ic_active),
+                                    StatCard("Expiring", stats.expiringToday.toString(), R.drawable.ic_warning)
                                 )
                             )
                         }
                     }
-
                     is Resource.Error -> {
                         binding.progressBar.gone()
-                        // Show error
                     }
-
                     else -> {}
                 }
             }
@@ -160,18 +156,10 @@ class HomeFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.recentPermits.collectLatest { resource ->
                 when (resource) {
-                    is Resource.Loading -> {
-                        // Show loading
-                    }
-
+                    is Resource.Loading -> {}
                     is Resource.Success -> {
                         recentPermitsAdapter.submitList(resource.data)
                     }
-
-                    is Resource.Error -> {
-                        // Show error
-                    }
-
                     else -> {}
                 }
             }

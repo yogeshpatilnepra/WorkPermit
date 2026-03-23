@@ -1,12 +1,9 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.main
 
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.isVisible
 import androidx.navigation.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
 import androidx.navigation.ui.setupWithNavController
 import com.apiscall.skeletoncode.R
 import com.apiscall.skeletoncode.databinding.ActivityMainBinding
@@ -47,17 +44,39 @@ class MainActivity : AppCompatActivity() {
                 R.id.workerSignOutFragment,
                 R.id.permitClosureFragment,
                 R.id.searchFilterFragment -> {
-                    // Hide bottom nav for these fragments
                     bottomNav.isVisible = false
                 }
+
                 else -> {
-                    // Show bottom nav for main fragments
                     bottomNav.isVisible = true
                 }
             }
         }
     }
+
     override fun onSupportNavigateUp(): Boolean {
         return findNavController(R.id.nav_host_fragment).navigateUp() || super.onSupportNavigateUp()
+    }
+
+    override fun onBackPressed() {
+        val navController = findNavController(R.id.nav_host_fragment)
+        val currentDestination = navController.currentDestination?.id
+
+        when (currentDestination) {
+            R.id.loginFragment -> {
+                finishAffinity()
+            }
+
+            R.id.homeFragment -> {
+                // Close app when on home screen
+                finishAffinity()
+            }
+
+            else -> {
+                if (!navController.popBackStack()) {
+                    finishAffinity()
+                }
+            }
+        }
     }
 }
