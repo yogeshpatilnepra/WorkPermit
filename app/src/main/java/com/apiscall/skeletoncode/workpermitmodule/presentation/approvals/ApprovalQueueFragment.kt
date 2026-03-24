@@ -1,6 +1,5 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.approvals
 
-
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -65,51 +64,28 @@ class ApprovalQueueFragment : Fragment() {
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = titles[position]
         }.attach()
-
-        // Add page change callback to refresh data when tab changes
-        binding.viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(position: Int) {
-                super.onPageSelected(position)
-                when (position) {
-                    0 -> viewModel.loadPendingApprovals()
-                    1 -> viewModel.loadRecentActions()
-                }
-            }
-        })
     }
 
     private fun setupObservers() {
-        // Observe approval result to show success message and refresh
+        // Observe approval result to show success message and navigate back
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.approvalResult.collectLatest { resource ->
                 when (resource) {
-                    is Resource.Loading -> {
-                        // Show loading indicator if needed
-                    }
-
+                    is Resource.Loading -> { }
                     is Resource.Success -> {
                         binding.root.showSnackbar("Action completed successfully!")
                         viewModel.resetApprovalResult()
-                        // Refresh current tab
-                        val currentPosition = binding.viewPager.currentItem
-                        if (currentPosition == 0) {
-                            viewModel.loadPendingApprovals()
-                        } else {
-                            viewModel.loadRecentActions()
-                        }
-                        // Delay to allow refresh then navigate back
-                        delay(500)
+                        
+                        // Delay briefly to allow the user to see the snackbar
+                        delay(800)
                         try {
                             requireActivity().onBackPressedDispatcher.onBackPressed()
-                        } catch (e: Exception) {
-                        }
+                        } catch (e: Exception) { }
                     }
-
                     is Resource.Error -> {
                         binding.root.showSnackbar(resource.message ?: "Action failed")
                         viewModel.resetApprovalResult()
                     }
-
                     else -> {}
                 }
             }
@@ -118,13 +94,9 @@ class ApprovalQueueFragment : Fragment() {
 
     private fun setupListeners() {
         binding.fabRefresh.setOnClickListener {
-            val currentPosition = binding.viewPager.currentItem
-            if (currentPosition == 0) {
-                viewModel.loadPendingApprovals()
-            } else {
-                viewModel.loadRecentActions()
-            }
-            binding.root.showSnackbar("Refreshing...")
+            // Data is real-time via Firestore snapshots, 
+            // but we show a confirmation to the user.
+            binding.root.showSnackbar("Data is synchronized in real-time")
         }
     }
 

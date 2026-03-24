@@ -1,62 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingVertical="8dp">
+        android:paddingBottom="16dp">
+
+        <!-- Timeline Line -->
+        <View
+            android:id="@+id/timelineLine"
+            android:layout_width="2dp"
+            android:layout_height="0dp"
+            android:background="@color/divider"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/ivActionIcon"
+            app:layout_constraintStart_toStartOf="@id/ivActionIcon"
+            app:layout_constraintTop_toBottomOf="@id/ivActionIcon" />
 
         <ImageView
-            android:id="@+id/ivUser"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_profile_placeholder" />
+            android:id="@+id/ivActionIcon"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/circle"
+            android:backgroundTint="@color/safety_green_light"
+            android:padding="4dp"
+            android:src="@drawable/ic_check_circle"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:tint="@color/safety_green" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:layout_marginStart="16dp"
+            android:orientation="vertical"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@id/ivActionIcon"
+            app:layout_constraintTop_toTopOf="parent">
 
-            <TextView
-                android:id="@+id/tvAction"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Approved"
-                android:textColor="@color/safety_green"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:id="@+id/ivUser"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_marginEnd="8dp"
+                    android:src="@drawable/ic_profile_placeholder"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+                <TextView
+                    android:id="@+id/tvAction"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Approved"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvTimestamp"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:text="12 Mar 2024 10:30"
+                    android:textColor="@color/text_hint"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/tvUserName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="John Doe"
-                android:textColor="@color/text_primary"
-                android:textSize="14sp" />
-
-            <TextView
-                android:id="@+id/tvComments"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Approved with conditions"
+                android:text="John Doe (Safety Officer)"
                 android:textColor="@color/text_secondary"
                 android:textSize="12sp" />
 
             <TextView
-                android:id="@+id/tvTimestamp"
-                android:layout_width="wrap_content"
+                android:id="@+id/tvComments"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="12 Mar 2024 10:30"
-                android:textColor="@color/text_hint"
-                android:textSize="11sp" />
+                android:layout_marginTop="6dp"
+                android:background="@color/background_light"
+                android:padding="8dp"
+                android:text="Site inspection completed. All safety protocols are in place."
+                android:textColor="@color/text_primary"
+                android:textSize="12sp"
+                android:visibility="visible" />
 
         </LinearLayout>
 
-    </LinearLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </layout>

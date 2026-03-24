@@ -76,6 +76,7 @@ class AttachmentViewModel @Inject constructor(
         }
     }
 
+    // Store file locally and save reference to Firestore (no Firebase Storage)
     fun uploadAttachment(permitId: String, file: File, mimeType: String) {
         viewModelScope.launch {
             _uploadResult.value = Resource.Loading
@@ -87,41 +88,36 @@ class AttachmentViewModel @Inject constructor(
             }
 
             try {
-                // Upload file to Firebase Storage
-                val fileName = file.name
-                val downloadUrlResult =
-                    firebaseRepository.uploadAttachment(permitId, file, fileName)
+                // Copy file to app's private storage
+                val appDir = context.getExternalFilesDir(null)
+                val timestamp = System.currentTimeMillis()
+                val extension = file.extension
+                val fileName = "attachment_${timestamp}.${extension}"
+                val destFile = File(appDir, fileName)
 
-                if (downloadUrlResult.isSuccess) {
-                    val downloadUrl = downloadUrlResult.getOrNull() ?: ""
+                file.copyTo(destFile, overwrite = true)
 
-                    // Create attachment record
-                    val attachmentId = UUID.randomUUID().toString()
-                    val attachment = mapOf(
-                        "id" to attachmentId,
-                        "fileName" to fileName,
-                        "filePath" to downloadUrl,
-                        "fileType" to mimeType,
-                        "fileSize" to file.length(),
-                        "uploadedById" to currentUser.id,
-                        "uploadedByName" to currentUser.fullName,
-                        "uploadedAt" to System.currentTimeMillis()
-                    )
+                // Create attachment record with local file path
+                val attachmentId = UUID.randomUUID().toString()
+                val attachment: MutableMap<String, Any> = mutableMapOf(
+                    "id" to attachmentId,
+                    "fileName" to file.name,
+                    "filePath" to destFile.absolutePath, // Local file path
+                    "fileType" to mimeType,
+                    "fileSize" to file.length(),
+                    "uploadedById" to currentUser.id,
+                    "uploadedByName" to currentUser.fullName,
+                    "uploadedAt" to System.currentTimeMillis()
+                )
 
-                    // Save attachment reference to Firestore
-                    val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
+                // Save attachment reference to Firestore
+                val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
 
-                    if (addResult.isSuccess) {
-                        _uploadResult.value = Resource.Success(true)
-                    } else {
-                        _uploadResult.value = Resource.Error(
-                            addResult.exceptionOrNull()?.message
-                                ?: "Failed to save attachment record"
-                        )
-                    }
+                if (addResult.isSuccess) {
+                    _uploadResult.value = Resource.Success(true)
                 } else {
                     _uploadResult.value = Resource.Error(
-                        downloadUrlResult.exceptionOrNull()?.message ?: "Failed to upload file"
+                        addResult.exceptionOrNull()?.message ?: "Failed to save attachment record"
                     )
                 }
             } catch (e: Exception) {
@@ -141,44 +137,45 @@ class AttachmentViewModel @Inject constructor(
             }
 
             try {
+                // Copy URI to local file
                 val file = copyUriToFile(uri)
                 val actualMimeType = getMimeType(uri) ?: mimeType
 
-                // Upload file to Firebase Storage
-                val fileName = file.name
-                val downloadUrlResult =
-                    firebaseRepository.uploadAttachment(permitId, file, fileName)
+                // Get the original file name
+                val originalFileName = getFileName(uri)
+                val finalFileName = if (!originalFileName.isNullOrBlank()) {
+                    originalFileName
+                } else {
+                    "attachment_${System.currentTimeMillis()}.${file.extension}"
+                }
 
-                if (downloadUrlResult.isSuccess) {
-                    val downloadUrl = downloadUrlResult.getOrNull() ?: ""
+                // Rename file to original name
+                val appDir = context.getExternalFilesDir(null)
+                val destFile = File(appDir, finalFileName)
+                file.copyTo(destFile, overwrite = true)
+                file.delete()
 
-                    // Create attachment record
-                    val attachmentId = UUID.randomUUID().toString()
-                    val attachment = mapOf(
-                        "id" to attachmentId,
-                        "fileName" to fileName,
-                        "filePath" to downloadUrl,
-                        "fileType" to actualMimeType,
-                        "fileSize" to file.length(),
-                        "uploadedById" to currentUser.id,
-                        "uploadedByName" to currentUser.fullName,
-                        "uploadedAt" to System.currentTimeMillis()
-                    )
+                // Create attachment record with local file path
+                val attachmentId = UUID.randomUUID().toString()
+                val attachment: MutableMap<String, Any> = mutableMapOf(
+                    "id" to attachmentId,
+                    "fileName" to finalFileName,
+                    "filePath" to destFile.absolutePath,
+                    "fileType" to actualMimeType,
+                    "fileSize" to destFile.length(),
+                    "uploadedById" to currentUser.id,
+                    "uploadedByName" to currentUser.fullName,
+                    "uploadedAt" to System.currentTimeMillis()
+                )
 
-                    // Save attachment reference to Firestore
-                    val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
+                // Save attachment reference to Firestore
+                val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
 
-                    if (addResult.isSuccess) {
-                        _uploadResult.value = Resource.Success(true)
-                    } else {
-                        _uploadResult.value = Resource.Error(
-                            addResult.exceptionOrNull()?.message
-                                ?: "Failed to save attachment record"
-                        )
-                    }
+                if (addResult.isSuccess) {
+                    _uploadResult.value = Resource.Success(true)
                 } else {
                     _uploadResult.value = Resource.Error(
-                        downloadUrlResult.exceptionOrNull()?.message ?: "Failed to upload file"
+                        addResult.exceptionOrNull()?.message ?: "Failed to save attachment record"
                     )
                 }
             } catch (e: Exception) {

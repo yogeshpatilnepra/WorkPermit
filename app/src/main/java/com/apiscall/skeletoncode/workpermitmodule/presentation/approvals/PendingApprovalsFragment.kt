@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
+import androidx.fragment.app.activityViewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -28,7 +28,8 @@ class PendingApprovalsFragment : Fragment() {
     private var _binding: FragmentApprovalsListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ApprovalQueueViewModel by viewModels()
+    // Using activityViewModels to share state with parent and sibling fragments
+    private val viewModel: ApprovalQueueViewModel by activityViewModels()
     private lateinit var permitAdapter: PermitAdapter
 
     override fun onCreateView(
@@ -45,8 +46,6 @@ class PendingApprovalsFragment : Fragment() {
 
         setupRecyclerView()
         setupObservers()
-
-        viewModel.loadPendingApprovals()
     }
 
     private fun setupRecyclerView() {
@@ -77,104 +76,53 @@ class PendingApprovalsFragment : Fragment() {
             viewModel.pendingApprovals.collectLatest { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        // Only show progress bar if list is empty
-                        if (permitAdapter.currentList.isEmpty()) {
+                        if (permitAdapter.itemCount == 0) {
                             binding.progressBar.visible()
-                            binding.rvPermits.gone()
+                            binding.emptyLayout.gone()
                         }
-                        binding.emptyLayout.gone()
                     }
 
                     is Resource.Success -> {
                         binding.progressBar.gone()
-                        if (resource.data.isNullOrEmpty()) {
-                            binding.rvPermits.gone()
-                            binding.emptyLayout.visibility = View.VISIBLE
-                            binding.tvEmpty.text = "No pending approvals"
-                            binding.emptyIcon.setImageResource(R.drawable.ic_empty)
-                        } else {
-                            binding.emptyLayout.gone()
-                            binding.rvPermits.visible()
-                            permitAdapter.submitList(resource.data)
+                        val permits = resource.data ?: emptyList()
+                        
+                        permitAdapter.submitList(permits) {
+                            if (permits.isEmpty()) {
+                                binding.rvPermits.gone()
+                                binding.emptyLayout.visible()
+                                binding.tvEmpty.text = "No pending approvals"
+                            } else {
+                                binding.emptyLayout.gone()
+                                binding.rvPermits.visible()
+                            }
                         }
                     }
 
                     is Resource.Error -> {
                         binding.progressBar.gone()
-                        binding.rvPermits.gone()
-                        binding.emptyLayout.visibility = View.VISIBLE
-                        binding.tvEmpty.text = resource.message ?: "Error loading approvals"
-                        binding.emptyIcon.setImageResource(R.drawable.ic_error)
+                        if (permitAdapter.itemCount == 0) {
+                            binding.rvPermits.gone()
+                            binding.emptyLayout.visible()
+                            binding.tvEmpty.text = resource.message ?: "Error loading approvals"
+                        } else {
+                            binding.root.showSnackbar(resource.message ?: "Update failed")
+                        }
                     }
 
-                    else -> {
-                        binding.progressBar.gone()
-                    }
+                    else -> {}
                 }
             }
         }
 
-        // Observe approval result
+        // Action results observers (Approve/Reject/Send Back)
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.approvalResult.collectLatest { resource ->
-                when (resource) {
-                    is Resource.Loading -> {
-                        // Optional: Show a global loading overlay or disable buttons
-                    }
-
-                    is Resource.Success -> {
-                        binding.root.showSnackbar("Permit approved successfully!")
-                        viewModel.resetApprovalResult()
-                        // No need to call loadPendingApprovals() manually
-                        // Firestore Flow handles the list update automatically
-                    }
-
-                    is Resource.Error -> {
-                        binding.root.showSnackbar(resource.message ?: "Approval failed")
-                        viewModel.resetApprovalResult()
-                    }
-
-                    else -> {}
-                }
-            }
-        }
-
-        // Observe rejection result
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.rejectionResult.collectLatest { resource ->
-                when (resource) {
-                    is Resource.Loading -> {}
-                    is Resource.Success -> {
-                        binding.root.showSnackbar("Permit rejected!")
-                        viewModel.resetRejectionResult()
-                    }
-
-                    is Resource.Error -> {
-                        binding.root.showSnackbar(resource.message ?: "Rejection failed")
-                        viewModel.resetRejectionResult()
-                    }
-
-                    else -> {}
-                }
-            }
-        }
-
-        // Observe send back result
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.sendBackResult.collectLatest { resource ->
-                when (resource) {
-                    is Resource.Loading -> {}
-                    is Resource.Success -> {
-                        binding.root.showSnackbar("Permit sent back for revision!")
-                        viewModel.resetSendBackResult()
-                    }
-
-                    is Resource.Error -> {
-                        binding.root.showSnackbar(resource.message ?: "Action failed")
-                        viewModel.resetSendBackResult()
-                    }
-
-                    else -> {}
+                if (resource is Resource.Success) {
+                    binding.root.showSnackbar("Permit approved successfully!")
+                    viewModel.resetApprovalResult()
+                } else if (resource is Resource.Error) {
+                    binding.root.showSnackbar(resource.message ?: "Approval failed")
+                    viewModel.resetApprovalResult()
                 }
             }
         }
@@ -192,10 +140,7 @@ class PendingApprovalsFragment : Fragment() {
                 when {
                     isApprove -> viewModel.approvePermit(permitId, comments)
                     action == "Reject" -> viewModel.rejectPermit(permitId, comments ?: "Rejected")
-                    action == "Send Back" -> viewModel.sendBackPermit(
-                        permitId,
-                        comments ?: "Sent back for revision"
-                    )
+                    action == "Send Back" -> viewModel.sendBackPermit(permitId, comments ?: "Sent back")
                 }
             }
             .setNegativeButton("Cancel", null)

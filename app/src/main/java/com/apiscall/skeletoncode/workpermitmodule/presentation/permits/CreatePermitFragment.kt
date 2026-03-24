@@ -69,7 +69,6 @@ class CreatePermitFragment : Fragment() {
         "Morning", "Evening", "Night", "General"
     )
 
-    // Add these variables at the class level
     private var checklistItems = listOf<ChecklistItem>()
     private val checklistManager = ChecklistManager
     private var selectedPermitType: String = "Hot Work"
@@ -387,6 +386,12 @@ class CreatePermitFragment : Fragment() {
             isValid = false
         }
 
+        // Checklists validation - COMPULSORY
+        if (!isDraft && !checklistManager.areRequiredItemsChecked(checklistItems)) {
+            binding.root.showSnackbar("Please complete all safety checklist items")
+            isValid = false
+        }
+
         if (!isValid) return
 
         // Get current user
@@ -416,11 +421,11 @@ class CreatePermitFragment : Fragment() {
                     jsaNo = binding.etJsaNo.text.toString(),
                     jobDescription = binding.etJobDescription.text.toString(),
                     status = if (isDraft) "draft" else "submitted",
-                    approvalStage = if (isDraft) "draft" else "issuer_review", // This is key!
+                    approvalStage = if (isDraft) "draft" else "issuer_review",
                     requestorId = user.id,
                     requestorName = user.fullName,
                     requestorEmail = user.email,
-                    // Checklist fields
+                    // Checklist fields mapping
                     gasTesting = checklistData["gas_testing"] ?: false,
                     fireWatch = checklistData["fire_watch"] ?: false,
                     sparkShields = checklistData["spark_shields"] ?: false,
@@ -428,24 +433,37 @@ class CreatePermitFragment : Fragment() {
                     barricading = checklistData["barricading"] ?: false,
                     isolationPoints = checklistData["isolation_points"] ?: false,
                     locksApplied = checklistData["locks_applied"] ?: false,
+                    locksVerified = checklistData["locks_verified"] ?: false,
                     zeroEnergyTest = checklistData["zero_energy_test"] ?: false,
+                    hiddenSources = checklistData["hidden_sources"] ?: false,
                     oxygenLevel = checklistData["oxygen_level"] ?: false,
+                    lelLevel = checklistData["lel_level"] ?: false,
+                    toxicGases = checklistData["toxic_gases"] ?: false,
                     ventilation = checklistData["ventilation"] ?: false,
                     rescueEquipment = checklistData["rescue_equipment"] ?: false,
                     attendant = checklistData["attendant"] ?: false,
+                    rescuePlan = checklistData["rescue_plan"] ?: false,
                     harnessInspection = checklistData["harness_inspection"] ?: false,
                     anchorPoints = checklistData["anchor_points"] ?: false,
                     fallProtection = checklistData["fall_protection"] ?: false,
+                    scaffolding = checklistData["scaffolding"] ?: false,
+                    rescuePlanHeight = checklistData["rescue_plan_height"] ?: false,
                     loadChart = checklistData["load_chart"] ?: false,
                     riggingInspection = checklistData["rigging_inspection"] ?: false,
                     qualifiedCrew = checklistData["qualified_crew"] ?: false,
                     dropZone = checklistData["drop_zone"] ?: false,
                     windSpeed = checklistData["wind_speed"] ?: false,
+                    liftPlan = checklistData["lift_plan"] ?: false,
                     arcFlashAssessment = checklistData["arc_flash_assessment"] ?: false,
                     arcRatedPpe = checklistData["arc_rated_ppe"] ?: false,
                     liveWorkProcedure = checklistData["live_work_procedure"] ?: false,
                     voltageTesting = checklistData["voltage_testing"] ?: false,
-                    boundaries = checklistData["boundaries"] ?: false
+                    boundaries = checklistData["boundaries"] ?: false,
+                    basicIsolation = checklistData["basic_isolation"] ?: false,
+                    correctPpe = checklistData["correct_ppe"] ?: false,
+                    barricadingCold = checklistData["barricading_cold"] ?: false,
+                    spillPrevention = checklistData["spill_prevention"] ?: false,
+                    housekeeping = checklistData["housekeeping"] ?: false
                 )
 
                 viewModel.createPermit(permit)

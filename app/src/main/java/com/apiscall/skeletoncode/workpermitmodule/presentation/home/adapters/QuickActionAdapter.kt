@@ -34,18 +34,17 @@ class QuickActionAdapter(
 
     override fun onBindViewHolder(holder: QuickActionViewHolder, position: Int) {
         val action = allActions[position]
-        // Skip NEW_PERMIT if not allowed - make it gone and reduce space
+        
         if (action == QuickAction.NEW_PERMIT && !showNewPermit) {
             holder.itemView.visibility = View.GONE
-            // Set layout params to 0 width to remove space
             val params = holder.itemView.layoutParams
             params.width = 0
             holder.itemView.layoutParams = params
         } else {
             holder.itemView.visibility = View.VISIBLE
-            // Reset width to wrap_content
+            // Fixed width to match New Permit button (as defined in XML 100dp)
             val params = holder.itemView.layoutParams
-            params.width = ViewGroup.LayoutParams.WRAP_CONTENT
+            params.width = (100 * holder.itemView.context.resources.displayMetrics.density).toInt()
             holder.itemView.layoutParams = params
             holder.bind(action)
         }

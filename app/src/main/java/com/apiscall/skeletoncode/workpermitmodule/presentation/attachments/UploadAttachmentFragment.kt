@@ -112,7 +112,6 @@ class UploadAttachmentFragment : Fragment() {
                     is Resource.Loading -> {
                         binding.progressBar.visible()
                     }
-
                     is Resource.Success -> {
                         binding.progressBar.gone()
                         attachmentAdapter.submitList(resource.data)
@@ -124,12 +123,10 @@ class UploadAttachmentFragment : Fragment() {
                             binding.rvAttachments.visible()
                         }
                     }
-
                     is Resource.Error -> {
                         binding.progressBar.gone()
                         binding.root.showSnackbar(resource.message ?: "Error loading attachments")
                     }
-
                     else -> {}
                 }
             }
@@ -144,16 +141,14 @@ class UploadAttachmentFragment : Fragment() {
                         binding.btnGallery.isEnabled = false
                         binding.btnDocument.isEnabled = false
                     }
-
                     is Resource.Success -> {
                         binding.progressBar.gone()
                         binding.btnCamera.isEnabled = true
                         binding.btnGallery.isEnabled = true
                         binding.btnDocument.isEnabled = true
-                        binding.root.showSnackbar("Attachment uploaded successfully")
+                        binding.root.showSnackbar("Attachment uploaded successfully!")
                         viewModel.loadAttachments(args.permitId)
                     }
-
                     is Resource.Error -> {
                         binding.progressBar.gone()
                         binding.btnCamera.isEnabled = true
@@ -161,7 +156,6 @@ class UploadAttachmentFragment : Fragment() {
                         binding.btnDocument.isEnabled = true
                         binding.root.showSnackbar(resource.message ?: "Upload failed")
                     }
-
                     else -> {}
                 }
             }

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="match_parent"
@@ -11,22 +12,24 @@
             android:id="@+id/appBarLayout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar">
+            android:background="@color/surface"
+            app:elevation="0dp">
 
             <com.google.android.material.appbar.MaterialToolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
                 android:layout_height="?attr/actionBarSize"
-                android:background="@color/safety_blue"
                 app:navigationIcon="@drawable/ic_arrow_back"
+                app:navigationIconTint="@color/text_primary"
                 app:title="Permit Details"
-                app:titleTextColor="@android:color/white" />
+                app:titleTextColor="@color/text_primary" />
 
         </com.google.android.material.appbar.AppBarLayout>
 
         <androidx.core.widget.NestedScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:fillViewport="true"
             app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
             <androidx.constraintlayout.widget.ConstraintLayout
@@ -39,6 +42,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:visibility="gone"
+                    app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />
@@ -51,100 +55,68 @@
                     android:visibility="visible"
                     app:layout_constraintTop_toTopOf="parent">
 
-                    <!-- Status Chip - Fixed width to wrap content -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:orientation="horizontal">
-
-                        <TextView
-                            android:id="@+id/tvStatus"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingHorizontal="16dp"
-                            android:paddingVertical="8dp"
-                            android:text="Pending"
-                            android:textColor="@android:color/white"
-                            android:textSize="14sp"
-                            android:textStyle="bold" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="0dp"
-                            android:layout_weight="1" />
-
-                        <TextView
-                            android:id="@+id/tvApprovalStage"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Stage 1/3"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
-
-                    </LinearLayout>
-
-                    <!-- Permit Header Card -->
+                    <!-- Top Header Card: Status & ID -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
+                        app:cardBackgroundColor="@color/surface"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/divider"
+                        app:strokeWidth="1dp">
 
-                        <LinearLayout
+                        <androidx.constraintlayout.widget.ConstraintLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:orientation="vertical"
                             android:padding="16dp">
 
                             <TextView
                                 android:id="@+id/tvPermitNumber"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="PTW-2024-001"
+                                android:text="PTW-123456"
                                 android:textColor="@color/safety_blue"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:textSize="18sp"
+                                android:textStyle="bold"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toTopOf="parent" />
 
                             <TextView
-                                android:id="@+id/tvPermitType"
+                                android:id="@+id/tvStatus"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:background="@drawable/bg_status_pending"
+                                android:paddingHorizontal="12dp"
+                                android:paddingVertical="4dp"
+                                android:text="PENDING"
+                                android:textColor="@color/safety_orange"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                app:layout_constraintBottom_toBottomOf="@id/tvPermitNumber"
+                                app:layout_constraintEnd_toEndOf="parent"
+                                app:layout_constraintTop_toTopOf="@id/tvPermitNumber" />
+
+                            <TextView
+                                android:id="@+id/tvApprovalStage"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="Hot Work"
+                                android:text="Stage: Issuer Review"
                                 android:textColor="@color/text_secondary"
-                                android:textSize="14sp" />
+                                android:textSize="12sp"
+                                app:layout_constraintStart_toStartOf="parent"
+                                app:layout_constraintTop_toBottomOf="@id/tvPermitNumber" />
 
-                            <TextView
-                                android:id="@+id/tvTitle"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Welding at Reactor Area"
-                                android:textColor="@color/text_primary"
-                                android:textSize="18sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvDescription"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="Hot work permit for welding repairs"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="14sp" />
-
-                        </LinearLayout>
-
+                        </androidx.constraintlayout.widget.ConstraintLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Location & Work Details Card -->
+                    <!-- Work Info Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
                         <LinearLayout
@@ -154,88 +126,35 @@
                             android:padding="16dp">
 
                             <TextView
-                                android:layout_width="match_parent"
+                                android:id="@+id/tvPermitType"
+                                android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="Work Details"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:background="@color/safety_blue_light"
+                                android:paddingHorizontal="8dp"
+                                android:paddingVertical="2dp"
+                                android:text="HOT WORK"
+                                android:textColor="@color/safety_blue"
+                                android:textSize="10sp"
                                 android:textStyle="bold" />
 
-                            <LinearLayout
+                            <TextView
+                                android:id="@+id/tvTitle"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:orientation="vertical">
+                                android:layout_marginTop="8dp"
+                                android:text="Welding work at reactor area"
+                                android:textColor="@color/text_primary"
+                                android:textSize="17sp"
+                                android:textStyle="bold" />
 
-                                <TextView
-                                    android:id="@+id/tvPlant"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:drawablePadding="8dp"
-                                    android:text="Plant: Sulzer Pump Plant 1"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp"
-                                    app:drawableStartCompat="@drawable/ic_factory" />
-
-                                <TextView
-                                    android:id="@+id/tvLocation"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:drawablePadding="8dp"
-                                    android:text="Location: Reactor Area"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp"
-                                    app:drawableStartCompat="@drawable/ic_location" />
-
-                                <TextView
-                                    android:id="@+id/tvDepartment"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:drawablePadding="8dp"
-                                    android:text="Department: Maintenance"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp"
-                                    app:drawableStartCompat="@drawable/ic_department" />
-
-                                <TextView
-                                    android:id="@+id/tvArea"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Area: CNC Zone"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvCompany"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Company: In-house"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvShift"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Shift: Morning"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp" />
-
-                                <TextView
-                                    android:id="@+id/tvWorkerCount"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="8dp"
-                                    android:text="Worker Count: 2"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="14sp" />
-
-                            </LinearLayout>
+                            <TextView
+                                android:id="@+id/tvDescription"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="Detailed description of the work goes here..."
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp" />
 
                             <View
                                 android:layout_width="match_parent"
@@ -243,18 +162,9 @@
                                 android:layout_marginVertical="12dp"
                                 android:background="@color/divider" />
 
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Schedule"
-                                android:textColor="@color/text_primary"
-                                android:textSize="14sp"
-                                android:textStyle="bold" />
-
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
                                 android:orientation="horizontal">
 
                                 <LinearLayout
@@ -262,24 +172,8 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="Start"
-                                        android:textColor="@color/text_secondary"
-                                        android:textSize="12sp" />
-
-                                    <TextView
-                                        android:id="@+id/tvStartDate"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="4dp"
-                                        android:text="12 Mar 2024 08:00"
-                                        android:textColor="@color/text_primary"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-
+                                    <TextView style="@style/DetailLabel" android:text="START" />
+                                    <TextView android:id="@+id/tvStartDate" style="@style/DetailValue" android:text="01 Jan 2024" />
                                 </LinearLayout>
 
                                 <LinearLayout
@@ -287,38 +181,79 @@
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:orientation="vertical">
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:text="End"
-                                        android:textColor="@color/text_secondary"
-                                        android:textSize="12sp" />
-
-                                    <TextView
-                                        android:id="@+id/tvEndDate"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="4dp"
-                                        android:text="14 Mar 2024 17:00"
-                                        android:textColor="@color/text_primary"
-                                        android:textSize="14sp"
-                                        android:textStyle="bold" />
-
+                                    <TextView style="@style/DetailLabel" android:text="END" />
+                                    <TextView android:id="@+id/tvEndDate" style="@style/DetailValue" android:text="02 Jan 2024" />
                                 </LinearLayout>
 
                             </LinearLayout>
 
                         </LinearLayout>
-
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Requester Info Card -->
+                    <!-- Location & Team Card (Horizontal Spans) -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+
+                        <GridLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:columnCount="2"
+                            android:padding="8dp">
+
+                            <LinearLayout style="@style/DetailItemLayout">
+                                <TextView style="@style/DetailLabel" android:text="Plant" />
+                                <TextView android:id="@+id/tvPlant" style="@style/DetailValue" android:text="Main Plant" />
+                            </LinearLayout>
+
+                            <LinearLayout style="@style/DetailItemLayout">
+                                <TextView style="@style/DetailLabel" android:text="Department" />
+                                <TextView android:id="@+id/tvDepartment" style="@style/DetailValue" android:text="Maintenance" />
+                            </LinearLayout>
+
+                            <LinearLayout style="@style/DetailItemLayout">
+                                <TextView style="@style/DetailLabel" android:text="Location" />
+                                <TextView android:id="@+id/tvLocation" style="@style/DetailValue" android:text="Reactor Area" />
+                            </LinearLayout>
+
+                            <LinearLayout style="@style/DetailItemLayout">
+                                <TextView style="@style/DetailLabel" android:text="Area" />
+                                <TextView android:id="@+id/tvArea" style="@style/DetailValue" android:text="Zone B" />
+                            </LinearLayout>
+
+                            <LinearLayout style="@style/DetailItemLayout">
+                                <TextView style="@style/DetailLabel" android:text="Shift" />
+                                <TextView android:id="@+id/tvShift" style="@style/DetailValue" android:text="Morning" />
+                            </LinearLayout>
+
+                            <LinearLayout style="@style/DetailItemLayout">
+                                <TextView style="@style/DetailLabel" android:text="Workers" />
+                                <TextView android:id="@+id/tvWorkerCount" style="@style/DetailValue" android:text="5" />
+                            </LinearLayout>
+
+                            <LinearLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_columnSpan="2"
+                                android:layout_columnWeight="1"
+                                android:orientation="vertical"
+                                android:padding="8dp">
+                                <TextView style="@style/DetailLabel" android:text="Company" />
+                                <TextView android:id="@+id/tvCompany" style="@style/DetailValue" android:text="In-house" />
+                            </LinearLayout>
+
+                        </GridLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Requester & Docs Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
                         <LinearLayout
@@ -327,25 +262,22 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Requester Information"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                            <TextView style="@style/SectionHeader" android:text="Personnel &amp; Documents" />
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
+                                android:layout_marginTop="4dp"
+                                android:gravity="center_vertical"
                                 android:orientation="horizontal">
 
-                                <ImageView
+                                <com.google.android.material.imageview.ShapeableImageView
                                     android:id="@+id/ivRequester"
-                                    android:layout_width="48dp"
-                                    android:layout_height="48dp"
-                                    android:src="@drawable/ic_profile_placeholder" />
+                                    android:layout_width="44dp"
+                                    android:layout_height="44dp"
+                                    android:scaleType="centerCrop"
+                                    android:src="@drawable/ic_profile_placeholder"
+                                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 
                                 <LinearLayout
                                     android:layout_width="0dp"
@@ -356,137 +288,72 @@
 
                                     <TextView
                                         android:id="@+id/tvRequesterName"
-                                        android:layout_width="wrap_content"
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:text="John Contractor"
+                                        android:text="John Doe"
                                         android:textColor="@color/text_primary"
-                                        android:textSize="16sp"
+                                        android:textSize="14sp"
                                         android:textStyle="bold" />
 
                                     <TextView
                                         android:id="@+id/tvRequesterDept"
-                                        android:layout_width="wrap_content"
+                                        android:layout_width="match_parent"
                                         android:layout_height="wrap_content"
-                                        android:layout_marginTop="4dp"
-                                        android:text="Maintenance Department"
-                                        android:textColor="@color/text_secondary"
-                                        android:textSize="14sp" />
-
-                                    <TextView
-                                        android:id="@+id/tvRequesterEmail"
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginTop="4dp"
-                                        android:text="john@example.com"
+                                        android:text="Maintenance"
                                         android:textColor="@color/text_secondary"
                                         android:textSize="12sp" />
 
+                                    <TextView
+                                        android:id="@+id/tvRequesterEmail"
+                                        android:layout_width="match_parent"
+                                        android:layout_height="wrap_content"
+                                        android:text="john@example.com"
+                                        android:textColor="@color/text_hint"
+                                        android:textSize="11sp" />
+                                </LinearLayout>
+                            </LinearLayout>
+
+                            <View
+                                android:layout_width="match_parent"
+                                android:layout_height="1dp"
+                                android:layout_marginVertical="12dp"
+                                android:background="@color/divider" />
+
+                            <LinearLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:orientation="horizontal">
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+                                    <TextView style="@style/DetailLabel" android:text="Risk Assessment" />
+                                    <TextView android:id="@+id/tvRiskAssessmentNo" style="@style/DetailValue" android:text="RA-12345" />
+                                </LinearLayout>
+
+                                <LinearLayout
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:orientation="vertical">
+                                    <TextView style="@style/DetailLabel" android:text="JSA Number" />
+                                    <TextView android:id="@+id/tvJsaNo" style="@style/DetailValue" android:text="JSA-6789" />
                                 </LinearLayout>
 
                             </LinearLayout>
 
                         </LinearLayout>
-
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Documents Card -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Documents"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:id="@+id/tvRiskAssessmentNo"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:text="Risk Assessment No: RA-123"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="14sp" />
-
-                            <TextView
-                                android:id="@+id/tvJsaNo"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:text="JSA No: JSA-456"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="14sp" />
-
-                        </LinearLayout>
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Safety Verification Card - Only shows if data exists -->
-                    <com.google.android.material.card.MaterialCardView
-                        android:id="@+id/cardSafetyVerification"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        android:visibility="gone"
-                        app:cardCornerRadius="12dp"
-                        app:cardElevation="2dp">
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="vertical"
-                            android:padding="16dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Safety Verification"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
-                            <com.google.android.material.checkbox.MaterialCheckBox
-                                android:id="@+id/cbToolboxTalkDone"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:enabled="false"
-                                android:text="Toolbox Talk Completed"
-                                android:visibility="gone" />
-
-                            <com.google.android.material.checkbox.MaterialCheckBox
-                                android:id="@+id/cbPpeVerified"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:enabled="false"
-                                android:text="PPE Verified"
-                                android:visibility="gone" />
-
-                        </LinearLayout>
-
-                    </com.google.android.material.card.MaterialCardView>
-
-                    <!-- Permit-Specific Checklist Card -->
+                    <!-- Safety Section -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/cardChecklist"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        android:visibility="gone"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
                         <LinearLayout
@@ -495,31 +362,52 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Permit-Specific Checklist"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                            <TextView style="@style/SectionHeader" android:text="Safety Verification" />
 
                             <LinearLayout
                                 android:id="@+id/checklistContainer"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
+                                android:layout_marginTop="4dp"
                                 android:orientation="vertical" />
 
-                        </LinearLayout>
+                            <LinearLayout
+                                android:id="@+id/cardSafetyVerification"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:orientation="horizontal">
 
+                                <com.google.android.material.checkbox.MaterialCheckBox
+                                    android:id="@+id/cbToolboxTalkDone"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:enabled="false"
+                                    android:minHeight="0dp"
+                                    android:text="Toolbox Talk"
+                                    android:textSize="12sp" />
+
+                                <com.google.android.material.checkbox.MaterialCheckBox
+                                    android:id="@+id/cbPpeVerified"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:enabled="false"
+                                    android:minHeight="0dp"
+                                    android:text="PPE Verified"
+                                    android:textSize="12sp" />
+                            </LinearLayout>
+
+                        </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Attachments Card -->
+                    <!-- Attachments -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
                         <LinearLayout
@@ -528,42 +416,42 @@
                             android:orientation="vertical"
                             android:padding="16dp">
 
-                            <TextView
+                            <RelativeLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:text="Attachments"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
+                                android:layout_marginBottom="8dp">
+                                <TextView style="@style/SectionHeader" android:text="Attachments" android:layout_centerVertical="true" android:paddingBottom="0dp"/>
+                                <com.google.android.material.button.MaterialButton
+                                    android:id="@+id/btnAddAttachment"
+                                    style="@style/Widget.Material3.Button.TextButton"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:minWidth="0dp"
+                                    android:text="Add"
+                                    android:textSize="12sp"
+                                    app:icon="@drawable/ic_add"
+                                    app:iconSize="16dp" />
+                            </RelativeLayout>
 
                             <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/rvAttachments"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:nestedScrollingEnabled="false"
+                                android:clipToPadding="false"
                                 android:orientation="horizontal"
-                                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
-                            <com.google.android.material.button.MaterialButton
-                                android:id="@+id/btnAddAttachment"
-                                style="@style/Widget.Material3.Button.OutlinedButton"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
-                                android:icon="@drawable/ic_add"
-                                android:text="Add Attachment" />
+                                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                                tools:listitem="@layout/item_attachment" />
 
                         </LinearLayout>
-
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Approval History Card -->
+                    <!-- History -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="12dp"
-                        app:cardCornerRadius="12dp"
+                        android:layout_marginBottom="24dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="2dp">
 
                         <LinearLayout
@@ -571,107 +459,99 @@
                             android:layout_height="wrap_content"
                             android:orientation="vertical"
                             android:padding="16dp">
-
-                            <TextView
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:text="Approval History"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:textStyle="bold" />
-
+                            <TextView style="@style/SectionHeader" android:text="Approval History" />
                             <androidx.recyclerview.widget.RecyclerView
                                 android:id="@+id/rvApprovalHistory"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="12dp"
+                                android:layout_marginTop="8dp"
                                 android:nestedScrollingEnabled="false"
-                                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
-
+                                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                                tools:listitem="@layout/item_approval_history" />
                         </LinearLayout>
 
                     </com.google.android.material.card.MaterialCardView>
 
-                    <!-- Approval Actions (Approve/Reject/Send Back) -->
+                    <!-- Actions -->
                     <LinearLayout
                         android:id="@+id/approvalActions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
                         android:orientation="horizontal"
                         android:visibility="gone">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnApprove"
                             android:layout_width="0dp"
-                            android:layout_height="48dp"
-                            android:layout_marginEnd="8dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="6dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/safety_green"
-                            android:text="Approve" />
+                            android:text="Approve"
+                            app:cornerRadius="12dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnReject"
                             android:layout_width="0dp"
-                            android:layout_height="48dp"
-                            android:layout_marginEnd="8dp"
+                            android:layout_height="56dp"
+                            android:layout_marginHorizontal="6dp"
                             android:layout_weight="1"
                             android:backgroundTint="@color/safety_red"
-                            android:text="Reject" />
+                            android:text="Reject"
+                            app:cornerRadius="12dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSendBack"
                             style="@style/Widget.Material3.Button.OutlinedButton"
                             android:layout_width="0dp"
-                            android:layout_height="wrap_content"
+                            android:layout_height="56dp"
+                            android:layout_marginStart="6dp"
                             android:layout_weight="1"
-                            android:text="Send Back" />
-
+                            android:text="Back"
+                            app:cornerRadius="12dp" />
                     </LinearLayout>
 
-                    <!-- Closure Actions (For Supervisor to Close Permit) -->
                     <LinearLayout
                         android:id="@+id/closureActions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:orientation="horizontal"
+                        android:layout_marginBottom="16dp"
                         android:visibility="gone">
-
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnClosePermitClosure"
                             android:layout_width="match_parent"
                             android:layout_height="56dp"
                             android:backgroundTint="@color/safety_blue"
-                            android:text="Close Permit" />
-
+                            android:text="Close Permit"
+                            app:cornerRadius="12dp" />
                     </LinearLayout>
 
-                    <!-- Worker Actions (Sign In/Sign Out) -->
                     <LinearLayout
                         android:id="@+id/workerActions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
                         android:orientation="horizontal"
                         android:visibility="gone">
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSignInWorker"
-                            android:layout_width="0dp"
-                            android:layout_height="48dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
                             android:backgroundTint="@color/safety_green"
-                            android:text="Sign In Worker"
-                            android:visibility="gone" />
+                            android:text="Worker Sign In"
+                            android:visibility="gone"
+                            app:cornerRadius="12dp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSignOutWorker"
-                            android:layout_width="0dp"
-                            android:layout_height="48dp"
-                            android:layout_weight="1"
+                            android:layout_width="match_parent"
+                            android:layout_height="56dp"
                             android:backgroundTint="@color/safety_orange"
-                            android:text="Sign Out Worker"
-                            android:visibility="gone" />
-
+                            android:text="Worker Sign Out"
+                            android:visibility="gone"
+                            app:cornerRadius="12dp" />
                     </LinearLayout>
 
                 </LinearLayout>

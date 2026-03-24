@@ -1,5 +1,6 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.permits
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -218,20 +219,27 @@ class PermitDetailsFragment : Fragment() {
             "LOTO" -> {
                 checklistItems.add("Isolation points identified" to permit.isolationPoints)
                 checklistItems.add("Locks applied" to permit.locksApplied)
+                checklistItems.add("Locks verified" to permit.locksVerified)
                 checklistItems.add("Zero energy test performed" to permit.zeroEnergyTest)
+                checklistItems.add("Hidden energy sources identified" to permit.hiddenSources)
             }
 
             "CONFINED_SPACE" -> {
-                checklistItems.add("Oxygen level checked" to permit.oxygenLevel)
+                checklistItems.add("Oxygen level checked (19.5% - 23.5%)" to permit.oxygenLevel)
+                checklistItems.add("LEL level checked (< 10%)" to permit.lelLevel)
+                checklistItems.add("Toxic gases checked" to permit.toxicGases)
                 checklistItems.add("Ventilation adequate" to permit.ventilation)
                 checklistItems.add("Rescue equipment ready" to permit.rescueEquipment)
                 checklistItems.add("Attendant assigned" to permit.attendant)
+                checklistItems.add("Rescue plan reviewed" to permit.rescuePlan)
             }
 
             "WORK_AT_HEIGHT" -> {
                 checklistItems.add("Harness inspected" to permit.harnessInspection)
                 checklistItems.add("Anchor points certified" to permit.anchorPoints)
                 checklistItems.add("Fall protection in place" to permit.fallProtection)
+                checklistItems.add("Scaffolding inspected" to permit.scaffolding)
+                checklistItems.add("Rescue plan for height reviewed" to permit.rescuePlanHeight)
             }
 
             "LIFTING" -> {
@@ -239,17 +247,23 @@ class PermitDetailsFragment : Fragment() {
                 checklistItems.add("Rigging inspected" to permit.riggingInspection)
                 checklistItems.add("Qualified crew assigned" to permit.qualifiedCrew)
                 checklistItems.add("Drop zone established" to permit.dropZone)
+                checklistItems.add("Wind speed within limits" to permit.windSpeed)
+                checklistItems.add("Lift plan approved" to permit.liftPlan)
             }
 
             "LIVE_EQUIPMENT" -> {
                 checklistItems.add("Arc flash assessment done" to permit.arcFlashAssessment)
                 checklistItems.add("Arc-rated PPE available" to permit.arcRatedPpe)
+                checklistItems.add("Live work procedure followed" to permit.liveWorkProcedure)
                 checklistItems.add("Voltage testing performed" to permit.voltageTesting)
+                checklistItems.add("Boundaries established" to permit.boundaries)
             }
 
             "COLD_WORK" -> {
                 checklistItems.add("Basic isolation done" to permit.basicIsolation)
                 checklistItems.add("Correct PPE available" to permit.correctPpe)
+                checklistItems.add("Barricading (Cold Work)" to permit.barricadingCold)
+                checklistItems.add("Spill prevention in place" to permit.spillPrevention)
                 checklistItems.add("Housekeeping maintained" to permit.housekeeping)
             }
         }
@@ -442,8 +456,16 @@ class PermitDetailsFragment : Fragment() {
     }
 
     private fun showAttachmentPreview(filePath: String) {
-        MaterialAlertDialogBuilder(requireContext()).setTitle("Attachment Preview")
-            .setMessage("Preview not implemented in demo").setPositiveButton("OK", null).show()
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            val uri = android.net.Uri.parse(filePath)
+            setDataAndType(uri, context?.contentResolver?.getType(uri) ?: "*/*")
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        try {
+            startActivity(Intent.createChooser(intent, "Open File"))
+        } catch (e: Exception) {
+            binding.root.showSnackbar("No app found to open this file")
+        }
     }
 
     private fun setupListeners() {

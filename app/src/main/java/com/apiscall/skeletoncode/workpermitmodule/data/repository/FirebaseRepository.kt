@@ -1,16 +1,16 @@
 package com.apiscall.skeletoncode.workpermitmodule.data.repository
 
+import android.util.Log
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.ApprovalStage
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.snapshots
-import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.tasks.await
-import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -19,56 +19,104 @@ import javax.inject.Singleton
 class FirebaseRepository @Inject constructor() {
 
     private val db = FirebaseFirestore.getInstance()
-    private val storage = FirebaseStorage.getInstance()
     private val permitsCollection = db.collection("permits")
+    private val TAG = "FirebaseRepository"
 
     // Get all permits
     fun getPermitsFlow(): Flow<List<PermitModel>> {
-        return permitsCollection.orderBy("createdAt", Query.Direction.DESCENDING).snapshots()
+        return permitsCollection
+            .orderBy("createdAt", Query.Direction.DESCENDING)
+            .snapshots()
             .map { snapshot ->
                 snapshot.toObjects(PermitModel::class.java)
             }
+            .catch { e ->
+                Log.e(TAG, "Error getting all permits: ${e.message}", e)
+                emit(emptyList())
+            }
     }
 
-    // Get permits by requestor (my permits)
+    // Get permits by requestor
     fun getPermitsByRequestorFlow(requestorId: String): Flow<List<PermitModel>> {
-        return permitsCollection.whereEqualTo("requestorId", requestorId)
-            .orderBy("createdAt", Query.Direction.DESCENDING).snapshots().map { snapshot ->
+        return permitsCollection
+            .whereEqualTo("requestorId", requestorId)
+            .snapshots()
+            .map { snapshot ->
                 snapshot.toObjects(PermitModel::class.java)
+                    .sortedByDescending { it.createdAt }
+            }
+            .catch { e ->
+                Log.e(TAG, "Error getting permits by requestor: ${e.message}", e)
+                emit(emptyList())
             }
     }
 
     // Get permits by status
     fun getPermitsByStatusFlow(status: String): Flow<List<PermitModel>> {
-        return permitsCollection.whereEqualTo("status", status)
-            .orderBy("createdAt", Query.Direction.DESCENDING).snapshots().map { snapshot ->
+        return permitsCollection
+            .whereEqualTo("status", status)
+            .snapshots()
+            .map { snapshot ->
                 snapshot.toObjects(PermitModel::class.java)
+                    .sortedByDescending { it.createdAt }
+            }
+            .catch { e ->
+                Log.e(TAG, "Error getting permits by status: ${e.message}", e)
+                emit(emptyList())
+            }
+    }
+
+    // Get permits by approval stage - REMOVED orderBy to avoid index requirement issues
+    fun getPermitsByApprovalStageFlow(stage: String): Flow<List<PermitModel>> {
+        Log.d(TAG, "Setting up listener for approval stage: $stage")
+        return permitsCollection
+            .whereEqualTo("approvalStage", stage)
+            .snapshots()
+            .map { snapshot ->
+                val allPermits = snapshot.toObjects(PermitModel::class.java)
+                val validPermits = allPermits.filter { permit ->
+                    permit.status != "rejected" &&
+                            permit.status != "sent_back" &&
+                            permit.status != "closed"
+                }.sortedByDescending { it.createdAt ?: Timestamp.now() }
+                
+                Log.d(TAG, "Emitting ${validPermits.size} permits for stage $stage")
+                validPermits
+            }
+            .catch { e ->
+                Log.e(TAG, "Critical error in getPermitsByApprovalStageFlow: ${e.message}", e)
+                emit(emptyList())
             }
     }
 
     // Get single permit by ID
     fun getPermitById(permitId: String): Flow<PermitModel?> {
-        return permitsCollection.document(permitId).snapshots().map { snapshot ->
-            snapshot.toObject(PermitModel::class.java)
-        }
+        return permitsCollection.document(permitId).snapshots()
+            .map { snapshot ->
+                snapshot.toObject(PermitModel::class.java)
+            }
+            .catch { e ->
+                Log.e(TAG, "Error getting permit by ID: ${e.message}", e)
+                emit(null)
+            }
     }
 
     // Create new permit
     suspend fun createPermit(permit: PermitModel): Result<PermitModel> {
         return try {
-            val id = UUID.randomUUID().toString()
-            val permitNumber = generatePermitNumber()
+            val id = if (permit.id.isEmpty()) UUID.randomUUID().toString() else permit.id
+            val permitNumber =
+                if (permit.permitNumber.isEmpty()) generatePermitNumber() else permit.permitNumber
             val newPermit = permit.copy(
                 id = id,
                 permitNumber = permitNumber,
-                status = "draft",
-                approvalStage = ApprovalStage.ISSUER_REVIEW,
-                createdAt = Timestamp.now(),
+                createdAt = permit.createdAt ?: Timestamp.now(),
                 updatedAt = Timestamp.now()
             )
             permitsCollection.document(id).set(newPermit).await()
             Result.success(newPermit)
         } catch (e: Exception) {
+            Log.e(TAG, "Error creating permit", e)
             Result.failure(e)
         }
     }
@@ -84,6 +132,7 @@ class FirebaseRepository @Inject constructor() {
             permitsCollection.document(permitId).update(updates).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Error submitting permit", e)
             Result.failure(e)
         }
     }
@@ -137,6 +186,7 @@ class FirebaseRepository @Inject constructor() {
             val updatedPermit = permitsCollection.document(permitId).get().await()
             Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
         } catch (e: Exception) {
+            Log.e(TAG, "Error approving permit", e)
             Result.failure(e)
         }
     }
@@ -165,6 +215,7 @@ class FirebaseRepository @Inject constructor() {
             val updatedPermit = permitsCollection.document(permitId).get().await()
             Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
         } catch (e: Exception) {
+            Log.e(TAG, "Error rejecting permit", e)
             Result.failure(e)
         }
     }
@@ -202,6 +253,7 @@ class FirebaseRepository @Inject constructor() {
             val updatedPermit = permitsCollection.document(permitId).get().await()
             Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
         } catch (e: Exception) {
+            Log.e(TAG, "Error sending back permit", e)
             Result.failure(e)
         }
     }
@@ -226,20 +278,7 @@ class FirebaseRepository @Inject constructor() {
             val updatedPermit = permitsCollection.document(permitId).get().await()
             Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
         } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    // Upload attachment
-    suspend fun uploadAttachment(permitId: String, file: File, fileName: String): Result<String> {
-        return try {
-            val storageRef = storage.reference.child("permits").child(permitId).child("attachments")
-                .child(fileName)
-
-            storageRef.putFile(android.net.Uri.fromFile(file)).await()
-            val downloadUrl = storageRef.downloadUrl.await()
-            Result.success(downloadUrl.toString())
-        } catch (e: Exception) {
+            Log.e(TAG, "Error closing permit", e)
             Result.failure(e)
         }
     }
@@ -253,6 +292,7 @@ class FirebaseRepository @Inject constructor() {
                 .document(attachment["id"] as String).set(attachment).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Error saving attachment record", e)
             Result.failure(e)
         }
     }
@@ -260,43 +300,33 @@ class FirebaseRepository @Inject constructor() {
     // Get attachments for permit
     fun getAttachmentsFlow(permitId: String): Flow<List<Map<String, Any>>> {
         return permitsCollection.document(permitId).collection("attachments")
-            .orderBy("uploadedAt", Query.Direction.DESCENDING).snapshots().map { snapshot ->
+            .orderBy("uploadedAt", Query.Direction.DESCENDING)
+            .snapshots()
+            .map { snapshot ->
                 snapshot.documents.map { it.data ?: emptyMap() }
             }
     }
 
-    private fun generatePermitNumber(): String {
-        val timestamp = System.currentTimeMillis().toString().takeLast(6)
-        return "PTW-${timestamp}"
-    }
-
+    // Update permit status
     suspend fun updatePermitStatus(
         permitId: String, status: String, comments: String
     ): Result<Unit> {
         return try {
             val updates = hashMapOf<String, Any>(
-                "status" to status, "updatedAt" to Timestamp.now(), "statusComment" to comments
+                "status" to status,
+                "updatedAt" to Timestamp.now(),
+                "statusComment" to comments
             )
             permitsCollection.document(permitId).update(updates).await()
             Result.success(Unit)
         } catch (e: Exception) {
+            Log.e(TAG, "Error updating permit status", e)
             Result.failure(e)
         }
     }
 
-    fun getPermitsByApprovalStageFlow(stage: String): Flow<List<PermitModel>> {
-        val excludedStatuses = listOf("rejected", "sent_back", "closed")
-        
-        // Failsafe query to avoid all composite index requirements
-        // We fetch all documents (ordered by creation date) and filter in memory.
-        // This is safe for moderate datasets and guarantees no "missing index" errors.
-        return permitsCollection
-            .orderBy("createdAt", Query.Direction.DESCENDING)
-            .snapshots()
-            .map { snapshot ->
-                snapshot.toObjects(PermitModel::class.java).filter { model ->
-                    model.approvalStage == stage && model.status !in excludedStatuses
-                }
-            }
+    private fun generatePermitNumber(): String {
+        val timestamp = System.currentTimeMillis().toString().takeLast(6)
+        return "PTW-${timestamp}"
     }
 }

@@ -41,8 +41,6 @@ class HistoryApprovalsFragment : Fragment() {
 
         setupRecyclerView()
         setupObservers()
-
-        viewModel.loadRecentActions()
     }
 
     private fun setupRecyclerView() {
@@ -62,31 +60,37 @@ class HistoryApprovalsFragment : Fragment() {
             viewModel.recentActions.collectLatest { resource ->
                 when (resource) {
                     is Resource.Loading -> {
-                        binding.progressBar.visible()
-                        binding.rvPermits.gone()
-                        binding.emptyLayout.gone()
+                        if (historyAdapter.itemCount == 0) {
+                            binding.progressBar.visible()
+                            binding.emptyLayout.gone()
+                        }
                     }
 
                     is Resource.Success -> {
                         binding.progressBar.gone()
-                        if (resource.data.isNullOrEmpty()) {
-                            binding.rvPermits.gone()
-                            binding.emptyLayout.visibility = View.VISIBLE
-                            binding.tvEmpty.text = "No approval history"
-                            binding.emptyIcon.setImageResource(R.drawable.ic_empty)
-                        } else {
-                            binding.emptyLayout.gone()
-                            binding.rvPermits.visible()
-                            historyAdapter.submitList(resource.data)
+                        val actions = resource.data ?: emptyList()
+                        
+                        historyAdapter.submitList(actions) {
+                            if (actions.isEmpty()) {
+                                binding.rvPermits.gone()
+                                binding.emptyLayout.visible()
+                                binding.tvEmpty.text = "No approval history"
+                                binding.emptyIcon.setImageResource(R.drawable.ic_empty)
+                            } else {
+                                binding.emptyLayout.gone()
+                                binding.rvPermits.visible()
+                            }
                         }
                     }
 
                     is Resource.Error -> {
                         binding.progressBar.gone()
-                        binding.rvPermits.gone()
-                        binding.emptyLayout.visibility = View.VISIBLE
-                        binding.tvEmpty.text = resource.message ?: "Error loading history"
-                        binding.emptyIcon.setImageResource(R.drawable.ic_error)
+                        if (historyAdapter.itemCount == 0) {
+                            binding.rvPermits.gone()
+                            binding.emptyLayout.visible()
+                            binding.tvEmpty.text = resource.message ?: "Error loading history"
+                            binding.emptyIcon.setImageResource(R.drawable.ic_error)
+                        }
                     }
 
                     else -> {}
