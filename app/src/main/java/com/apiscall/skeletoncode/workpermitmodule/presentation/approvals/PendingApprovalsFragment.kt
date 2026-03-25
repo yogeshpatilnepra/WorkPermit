@@ -5,7 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.fragment.findNavController
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -28,8 +28,9 @@ class PendingApprovalsFragment : Fragment() {
     private var _binding: FragmentApprovalsListBinding? = null
     private val binding get() = _binding!!
 
-    // Using activityViewModels to share state with parent and sibling fragments
-    private val viewModel: ApprovalQueueViewModel by activityViewModels()
+    // Using viewModels({ requireParentFragment() }) to share state with parent ApprovalQueueFragment
+    // and correctly clear state when the user logs out and navigates away
+    private val viewModel: ApprovalQueueViewModel by viewModels({ requireParentFragment() })
     private lateinit var permitAdapter: PermitAdapter
 
     override fun onCreateView(
@@ -50,6 +51,7 @@ class PendingApprovalsFragment : Fragment() {
 
     private fun setupRecyclerView() {
         permitAdapter = PermitAdapter(
+            currentUserRole = viewModel.currentUser.value?.role,
             onItemClick = { permitId ->
                 val action = ApprovalQueueFragmentDirections
                     .actionApprovalQueueFragmentToPermitDetailsFragment(permitId)
@@ -110,6 +112,15 @@ class PendingApprovalsFragment : Fragment() {
                     }
 
                     else -> {}
+                }
+            }
+        }
+
+        // Subscribing to user role to pass to adapter
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.currentUser.collectLatest { user ->
+                user?.let {
+                    permitAdapter.setCurrentUserRole(it.role)
                 }
             }
         }

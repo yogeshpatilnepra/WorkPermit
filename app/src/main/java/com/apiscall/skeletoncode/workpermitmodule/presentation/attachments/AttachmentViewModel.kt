@@ -1,6 +1,5 @@
 package com.apiscall.skeletoncode.workpermitmodule.presentation.attachments
 
-
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
@@ -40,88 +39,62 @@ class AttachmentViewModel @Inject constructor(
     fun loadAttachments(permitId: String) {
         viewModelScope.launch {
             _attachments.value = Resource.Loading
-
-            try {
-                firebaseRepository.getAttachmentsFlow(permitId).collect { attachmentMaps ->
-                    val attachmentsList = attachmentMaps.mapNotNull { map ->
-                        try {
-                            Attachment(
-                                id = map["id"] as? String ?: return@mapNotNull null,
-                                fileName = map["fileName"] as? String ?: "",
-                                filePath = map["filePath"] as? String ?: "",
-                                fileType = map["fileType"] as? String ?: "",
-                                fileSize = (map["fileSize"] as? Long) ?: 0,
-                                uploadedBy = User(
-                                    id = map["uploadedById"] as? String ?: "",
-                                    username = "",
-                                    email = "",
-                                    fullName = map["uploadedByName"] as? String ?: "",
-                                    role = com.apiscall.skeletoncode.workpermitmodule.domain.models.Role.WORKER,
-                                    department = "",
-                                    employeeId = ""
-                                ),
-                                uploadedAt = Date(
-                                    (map["uploadedAt"] as? Long) ?: System.currentTimeMillis()
-                                )
-                            )
-                        } catch (e: Exception) {
-                            null
-                        }
-                    }
-                    _attachments.value = Resource.Success(attachmentsList)
+            firebaseRepository.getAttachmentsFlow(permitId).collect { attachmentMaps ->
+                val attachmentsList = attachmentMaps.mapNotNull { map ->
+                    try {
+                        Attachment(
+                            id = map["id"] as? String ?: return@mapNotNull null,
+                            fileName = map["fileName"] as? String ?: "",
+                            filePath = map["filePath"] as? String ?: "",
+                            fileType = map["fileType"] as? String ?: "",
+                            fileSize = (map["fileSize"] as? Long) ?: 0,
+                            uploadedBy = User(
+                                id = map["uploadedById"] as? String ?: "",
+                                username = "",
+                                email = "",
+                                fullName = map["uploadedByName"] as? String ?: "",
+                                role = com.apiscall.skeletoncode.workpermitmodule.domain.models.Role.WORKER,
+                                department = "",
+                                employeeId = ""
+                            ),
+                            uploadedAt = Date((map["uploadedAt"] as? Long) ?: System.currentTimeMillis())
+                        )
+                    } catch (e: Exception) { null }
                 }
-            } catch (e: Exception) {
-                _attachments.value = Resource.Error(e.message ?: "Error loading attachments")
+                _attachments.value = Resource.Success(attachmentsList)
             }
         }
     }
 
-    // Store file locally and save reference to Firestore (no Firebase Storage)
     fun uploadAttachment(permitId: String, file: File, mimeType: String) {
         viewModelScope.launch {
             _uploadResult.value = Resource.Loading
-
-            val currentUser = authRepository.getCurrentUser()
-            if (currentUser == null) {
+            val currentUser = authRepository.getCurrentUser() ?: run {
                 _uploadResult.value = Resource.Error("User not logged in")
                 return@launch
             }
 
             try {
-                // Copy file to app's private storage
-                val appDir = context.getExternalFilesDir(null)
-                val timestamp = System.currentTimeMillis()
-                val extension = file.extension
-                val fileName = "attachment_${timestamp}.${extension}"
-                val destFile = File(appDir, fileName)
+                // Store file in private app storage (Free, No Firebase Storage needed)
+                val internalDir = File(context.filesDir, "attachments/$permitId").apply { mkdirs() }
+                val destFile = File(internalDir, "${UUID.randomUUID()}_${file.name}")
+                file.copyTo(destFile)
 
-                file.copyTo(destFile, overwrite = true)
-
-                // Create attachment record with local file path
-                val attachmentId = UUID.randomUUID().toString()
-                val attachment: MutableMap<String, Any> = mutableMapOf(
-                    "id" to attachmentId,
+                val attachment = mapOf(
+                    "id" to UUID.randomUUID().toString(),
                     "fileName" to file.name,
-                    "filePath" to destFile.absolutePath, // Local file path
+                    "filePath" to destFile.absolutePath, // Storing local path
                     "fileType" to mimeType,
-                    "fileSize" to file.length(),
+                    "fileSize" to destFile.length(),
                     "uploadedById" to currentUser.id,
                     "uploadedByName" to currentUser.fullName,
                     "uploadedAt" to System.currentTimeMillis()
                 )
 
-                // Save attachment reference to Firestore
-                val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
-
-                if (addResult.isSuccess) {
-                    _uploadResult.value = Resource.Success(true)
-                } else {
-                    _uploadResult.value = Resource.Error(
-                        addResult.exceptionOrNull()?.message ?: "Failed to save attachment record"
-                    )
-                }
+                val result = firebaseRepository.addAttachmentToPermit(permitId, attachment)
+                _uploadResult.value = if (result.isSuccess) Resource.Success(true) else Resource.Error("Failed to list item")
             } catch (e: Exception) {
-                _uploadResult.value = Resource.Error(e.message ?: "Upload failed")
+                _uploadResult.value = Resource.Error("Upload failed")
             }
         }
     }
@@ -129,108 +102,58 @@ class AttachmentViewModel @Inject constructor(
     fun uploadAttachment(permitId: String, uri: Uri, mimeType: String) {
         viewModelScope.launch {
             _uploadResult.value = Resource.Loading
-
-            val currentUser = authRepository.getCurrentUser()
-            if (currentUser == null) {
+            val currentUser = authRepository.getCurrentUser() ?: run {
                 _uploadResult.value = Resource.Error("User not logged in")
                 return@launch
             }
 
             try {
-                // Copy URI to local file
-                val file = copyUriToFile(uri)
-                val actualMimeType = getMimeType(uri) ?: mimeType
+                val inputStream = context.contentResolver.openInputStream(uri) ?: throw Exception("Cannot open file")
+                val fileName = getFileName(uri) ?: "file_${System.currentTimeMillis()}"
+                val internalDir = File(context.filesDir, "attachments/$permitId").apply { mkdirs() }
+                val destFile = File(internalDir, "${UUID.randomUUID()}_$fileName")
+                
+                FileOutputStream(destFile).use { output -> inputStream.copyTo(output) }
 
-                // Get the original file name
-                val originalFileName = getFileName(uri)
-                val finalFileName = if (!originalFileName.isNullOrBlank()) {
-                    originalFileName
-                } else {
-                    "attachment_${System.currentTimeMillis()}.${file.extension}"
-                }
-
-                // Rename file to original name
-                val appDir = context.getExternalFilesDir(null)
-                val destFile = File(appDir, finalFileName)
-                file.copyTo(destFile, overwrite = true)
-                file.delete()
-
-                // Create attachment record with local file path
-                val attachmentId = UUID.randomUUID().toString()
-                val attachment: MutableMap<String, Any> = mutableMapOf(
-                    "id" to attachmentId,
-                    "fileName" to finalFileName,
+                val attachment = mapOf(
+                    "id" to UUID.randomUUID().toString(),
+                    "fileName" to fileName,
                     "filePath" to destFile.absolutePath,
-                    "fileType" to actualMimeType,
+                    "fileType" to (getMimeType(uri) ?: mimeType),
                     "fileSize" to destFile.length(),
                     "uploadedById" to currentUser.id,
                     "uploadedByName" to currentUser.fullName,
                     "uploadedAt" to System.currentTimeMillis()
                 )
 
-                // Save attachment reference to Firestore
-                val addResult = firebaseRepository.addAttachmentToPermit(permitId, attachment)
-
-                if (addResult.isSuccess) {
-                    _uploadResult.value = Resource.Success(true)
-                } else {
-                    _uploadResult.value = Resource.Error(
-                        addResult.exceptionOrNull()?.message ?: "Failed to save attachment record"
-                    )
-                }
+                val result = firebaseRepository.addAttachmentToPermit(permitId, attachment)
+                _uploadResult.value = if (result.isSuccess) Resource.Success(true) else Resource.Error("Failed to list item")
             } catch (e: Exception) {
-                _uploadResult.value = Resource.Error(e.message ?: "Upload failed")
+                _uploadResult.value = Resource.Error("Upload failed")
             }
         }
-    }
-
-    private fun copyUriToFile(uri: Uri): File {
-        val inputStream = context.contentResolver.openInputStream(uri)
-            ?: throw Exception("Could not open input stream")
-
-        val fileName = getFileName(uri) ?: "file_${System.currentTimeMillis()}"
-        val outputFile = File(context.getExternalFilesDir(null), fileName)
-
-        FileOutputStream(outputFile).use { outputStream ->
-            inputStream.copyTo(outputStream)
-        }
-
-        return outputFile
     }
 
     private fun getFileName(uri: Uri): String? {
         var fileName: String? = null
         if (uri.scheme == "content") {
-            val cursor = context.contentResolver.query(uri, null, null, null, null)
-            cursor?.use {
-                if (it.moveToFirst()) {
-                    val nameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
-                    if (nameIndex != -1) {
-                        fileName = it.getString(nameIndex)
-                    }
+            context.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+                if (cursor.moveToFirst()) {
+                    val nameIndex = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                    if (nameIndex != -1) fileName = cursor.getString(nameIndex)
                 }
             }
         }
-        if (fileName == null) {
-            fileName = uri.path
-            val cut = fileName?.lastIndexOf('/')
-            if (cut != -1) {
-                fileName = fileName?.substring(cut!! + 1)
-            }
-        }
-        return fileName
+        return fileName ?: uri.path?.substringAfterLast('/')
     }
 
     private fun getMimeType(uri: Uri): String? {
         return if (uri.scheme == ContentResolver.SCHEME_CONTENT) {
             context.contentResolver.getType(uri)
         } else {
-            val fileExtension = MimeTypeMap.getFileExtensionFromUrl(uri.toString())
-            MimeTypeMap.getSingleton().getMimeTypeFromExtension(fileExtension.lowercase())
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(uri.toString()).lowercase())
         }
     }
 
-    fun resetState() {
-        _uploadResult.value = Resource.Idle
-    }
+    fun resetState() { _uploadResult.value = Resource.Idle }
 }

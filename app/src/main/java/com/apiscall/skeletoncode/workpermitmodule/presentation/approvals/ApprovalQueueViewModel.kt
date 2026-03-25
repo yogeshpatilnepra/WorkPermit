@@ -33,17 +33,16 @@ class ApprovalQueueViewModel @Inject constructor(
         .filterNotNull()
         .distinctUntilChanged { old, new -> old.id == new.id && old.role == new.role }
         .flatMapLatest { user ->
-            val approvalStage = when (user.role) {
-                Role.ISSUER -> "issuer_review"
-                Role.EHS_OFFICER -> "ehs_review"
-                Role.AREA_OWNER -> "area_owner_review"
-                else -> null
+            val canViewApprovals = when (user.role) {
+                Role.ISSUER, Role.EHS_OFFICER, Role.AREA_OWNER, Role.ADMIN, Role.SUPERVISOR, Role.WORKER -> true
+                else -> false
             }
 
-            if (approvalStage == null) {
+            if (!canViewApprovals) {
                 flowOf(Resource.Success(emptyList<Permit>()) as Resource<List<Permit>>)
             } else {
-                firebaseRepository.getPermitsByApprovalStageFlow(approvalStage)
+                // Fetch ALL pending permits across the system for Approvers
+                firebaseRepository.getAllPendingApprovalsFlow()
                     .map { models ->
                         val permits = models.map { convertToPermit(it) }
                         Resource.Success(permits) as Resource<List<Permit>>
@@ -66,10 +65,16 @@ class ApprovalQueueViewModel @Inject constructor(
                 .map { allPermits ->
                     val actions = mutableListOf<PermitAction>()
                     allPermits.forEach { permit ->
-                        val action = extractUserAction(permit, user)
-                        if (action != null) actions.add(action)
+                        if (user.role == Role.ADMIN || user.role == Role.SUPERVISOR) {
+                            // Admins and Supervisors see ALL actions
+                            addAllUserActions(permit, actions)
+                        } else {
+                            // Other users see only THEIR own actions
+                            val action = extractUserAction(permit, user)
+                            if (action != null) actions.add(action)
+                        }
                     }
-                    Resource.Success(actions.sortedByDescending { it.timestamp }) as Resource<List<PermitAction>>
+                    Resource.Success(actions.distinctBy { "${it.permitId}_${it.action}_${it.timestamp.time}" }.sortedByDescending { it.timestamp }) as Resource<List<PermitAction>>
                 }
                 .catch { e -> emit(Resource.Error(e.message ?: "Error loading history")) }
         }
@@ -98,6 +103,30 @@ class ApprovalQueueViewModel @Inject constructor(
         }
     }
 
+    private fun addAllUserActions(permit: PermitModel, list: MutableList<PermitAction>) {
+        if (permit.issuerReviewedAt != null) {
+            list.add(createAction(permit, permit.issuerReviewedAt.toDate(), 
+                if (permit.status == "rejected" && permit.approvalStage == "rejected") "Rejected by Issuer"
+                else if (permit.status == "sent_back" && permit.approvalStage == "sent_back") "Sent Back by Issuer"
+                else "Approved by Issuer"))
+        }
+        if (permit.ehsReviewedAt != null) {
+            list.add(createAction(permit, permit.ehsReviewedAt.toDate(), 
+                if (permit.status == "rejected" && permit.approvalStage == "rejected") "Rejected by EHS"
+                else if (permit.status == "sent_back" && permit.approvalStage == "sent_back") "Sent Back by EHS"
+                else "Approved by EHS"))
+        }
+        if (permit.areaOwnerReviewedAt != null) {
+            list.add(createAction(permit, permit.areaOwnerReviewedAt.toDate(), 
+                if (permit.status == "rejected" && permit.approvalStage == "rejected") "Rejected by Area Owner"
+                else if (permit.status == "sent_back" && permit.approvalStage == "sent_back") "Sent Back by Area Owner"
+                else "Approved by Area Owner"))
+        }
+        if (permit.closedAt != null) {
+            list.add(createAction(permit, permit.closedAt.toDate(), "Permit Closed by Supervisor"))
+        }
+    }
+
     private fun extractUserAction(permit: PermitModel, user: User): PermitAction? {
         return when (user.role) {
             Role.ISSUER -> {
@@ -113,6 +142,12 @@ class ApprovalQueueViewModel @Inject constructor(
             Role.AREA_OWNER -> {
                 if (permit.areaOwnerId == user.id && permit.areaOwnerReviewedAt != null) {
                     createAction(permit, permit.areaOwnerReviewedAt.toDate(), determineActionType(permit, "area_owner"))
+                } else null
+            }
+            Role.WORKER -> null
+            Role.SUPERVISOR -> {
+                if (permit.supervisorId == user.id && permit.closedAt != null) {
+                    createAction(permit, permit.closedAt.toDate(), "Closed Permit")
                 } else null
             }
             else -> null
@@ -139,7 +174,7 @@ class ApprovalQueueViewModel @Inject constructor(
         viewModelScope.launch {
             _approvalResult.value = Resource.Loading
             val user = _currentUser.value ?: return@launch
-            val role = getRoleKey(user.role) ?: return@launch
+            val role = getRoleKeyForPermit(user.role, permitId) ?: return@launch
 
             val result = firebaseRepository.approvePermit(permitId, role, user.id, user.fullName, comments)
             _approvalResult.value = if (result.isSuccess) Resource.Success(true) 
@@ -147,18 +182,37 @@ class ApprovalQueueViewModel @Inject constructor(
         }
     }
 
-    private fun getRoleKey(role: Role) = when (role) {
+    private fun getRoleKeyDirect(role: Role): String? = when (role) {
         Role.ISSUER -> "issuer"
         Role.EHS_OFFICER -> "ehs"
         Role.AREA_OWNER -> "area_owner"
         else -> null
     }
 
+    private suspend fun getRoleKeyForPermit(role: Role, permitId: String): String? {
+        // Direct mapping for specific approver roles
+        val directKey = getRoleKeyDirect(role)
+        if (directKey != null) return directKey
+
+        // For Admin/Supervisor, determine role key from the permit's current approval stage
+        if (role == Role.ADMIN || role == Role.SUPERVISOR) {
+            val permits = (pendingApprovals.value as? Resource.Success)?.data
+            val permit = permits?.find { it.id == permitId }
+            return when (permit?.approvalStage?.lowercase()?.trim()) {
+                "issuer_review" -> "issuer"
+                "ehs_review" -> "ehs"
+                "area_owner_review" -> "area_owner"
+                else -> "issuer"
+            }
+        }
+        return null
+    }
+
     fun rejectPermit(permitId: String, comments: String) {
         viewModelScope.launch {
             _rejectionResult.value = Resource.Loading
             val user = _currentUser.value ?: return@launch
-            val role = getRoleKey(user.role) ?: return@launch
+            val role = getRoleKeyForPermit(user.role, permitId) ?: return@launch
 
             val result = firebaseRepository.rejectPermit(permitId, role, user.id, user.fullName, comments)
             _rejectionResult.value = if (result.isSuccess) Resource.Success(true)
@@ -170,7 +224,7 @@ class ApprovalQueueViewModel @Inject constructor(
         viewModelScope.launch {
             _sendBackResult.value = Resource.Loading
             val user = _currentUser.value ?: return@launch
-            val role = getRoleKey(user.role) ?: return@launch
+            val role = getRoleKeyForPermit(user.role, permitId) ?: return@launch
 
             val result = firebaseRepository.sendBackPermit(permitId, role, user.id, user.fullName, comments)
             _sendBackResult.value = if (result.isSuccess) Resource.Success(true)

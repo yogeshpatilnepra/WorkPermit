@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.apiscall.skeletoncode.workpermitmodule.data.repository.FirebaseRepository
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitStatus
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitType
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.User
 import com.apiscall.skeletoncode.workpermitmodule.domain.repository.AuthRepository
 import com.apiscall.skeletoncode.workpermitmodule.utils.Resource
@@ -45,8 +46,16 @@ class HomeViewModel @Inject constructor(
 
     fun loadDashboardData() {
         viewModelScope.launch {
-            firebaseRepository.getPermitsFlow().collect { permits ->
+            val user = _currentUser.value ?: return@launch
+            firebaseRepository.getPermitsFlow().collect { allPermits ->
                 val now = System.currentTimeMillis()
+
+                val permits = when (user.role) {
+                    Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> {
+                        allPermits.filter { it.requestorId == user.id }
+                    }
+                    else -> allPermits
+                }
 
                 val stats = DashboardStats(
                     totalPermits = permits.size,

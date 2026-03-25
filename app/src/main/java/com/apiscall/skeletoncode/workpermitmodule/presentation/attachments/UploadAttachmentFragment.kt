@@ -100,7 +100,7 @@ class UploadAttachmentFragment : Fragment() {
         }
 
         binding.rvAttachments.apply {
-            layoutManager = LinearLayoutManager(requireContext())
+            layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
             adapter = attachmentAdapter
         }
     }
@@ -209,30 +209,30 @@ class UploadAttachmentFragment : Fragment() {
     private fun previewAttachment(attachment: Attachment) {
         when {
             attachment.fileType.contains("image") -> {
-                // Preview image using Glide or similar
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = android.net.Uri.parse(attachment.filePath)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                startActivity(Intent.createChooser(intent, "View Image"))
+                val dialog = PreviewImageDialogFragment.newInstance(attachment.filePath)
+                dialog.show(childFragmentManager, "PreviewImage")
             }
 
             attachment.fileType.contains("pdf") -> {
-                // Preview PDF
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = android.net.Uri.parse(attachment.filePath)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
-                startActivity(Intent.createChooser(intent, "View PDF"))
+                val dialog = PreviewPdfDialogFragment.newInstance(attachment.filePath)
+                dialog.show(childFragmentManager, "PreviewPdf")
             }
 
             else -> {
                 // Open with default app
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = android.net.Uri.parse(attachment.filePath)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                val file = File(attachment.filePath)
+                if (file.exists()) {
+                    val uri = FileProvider.getUriForFile(
+                        requireContext(),
+                        "${requireContext().packageName}.fileprovider",
+                        file
+                    )
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        setDataAndType(uri, attachment.fileType)
+                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    }
+                    startActivity(Intent.createChooser(intent, "Open File"))
                 }
-                startActivity(Intent.createChooser(intent, "Open File"))
             }
         }
     }

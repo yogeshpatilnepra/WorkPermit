@@ -3,6 +3,7 @@ package com.apiscall.skeletoncode.workpermitmodule.data.repository
 import android.util.Log
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.ApprovalStage
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.PermitModel
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.WorkerModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
@@ -22,91 +23,47 @@ class FirebaseRepository @Inject constructor() {
     private val permitsCollection = db.collection("permits")
     private val TAG = "FirebaseRepository"
 
-    // Get all permits
     fun getPermitsFlow(): Flow<List<PermitModel>> {
         return permitsCollection
             .orderBy("createdAt", Query.Direction.DESCENDING)
             .snapshots()
-            .map { snapshot ->
-                snapshot.toObjects(PermitModel::class.java)
-            }
-            .catch { e ->
-                Log.e(TAG, "Error getting all permits: ${e.message}", e)
-                emit(emptyList())
-            }
+            .map { it.toObjects(PermitModel::class.java) }
     }
 
-    // Get permits by requestor
-    fun getPermitsByRequestorFlow(requestorId: String): Flow<List<PermitModel>> {
-        return permitsCollection
-            .whereEqualTo("requestorId", requestorId)
-            .snapshots()
-            .map { snapshot ->
-                snapshot.toObjects(PermitModel::class.java)
-                    .sortedByDescending { it.createdAt }
-            }
-            .catch { e ->
-                Log.e(TAG, "Error getting permits by requestor: ${e.message}", e)
-                emit(emptyList())
-            }
-    }
-
-    // Get permits by status
-    fun getPermitsByStatusFlow(status: String): Flow<List<PermitModel>> {
-        return permitsCollection
-            .whereEqualTo("status", status)
-            .snapshots()
-            .map { snapshot ->
-                snapshot.toObjects(PermitModel::class.java)
-                    .sortedByDescending { it.createdAt }
-            }
-            .catch { e ->
-                Log.e(TAG, "Error getting permits by status: ${e.message}", e)
-                emit(emptyList())
-            }
-    }
-
-    // Get permits by approval stage - REMOVED orderBy to avoid index requirement issues
-    fun getPermitsByApprovalStageFlow(stage: String): Flow<List<PermitModel>> {
-        Log.d(TAG, "Setting up listener for approval stage: $stage")
-        return permitsCollection
-            .whereEqualTo("approvalStage", stage)
-            .snapshots()
-            .map { snapshot ->
-                val allPermits = snapshot.toObjects(PermitModel::class.java)
-                val validPermits = allPermits.filter { permit ->
-                    permit.status != "rejected" &&
-                            permit.status != "sent_back" &&
-                            permit.status != "closed"
-                }.sortedByDescending { it.createdAt ?: Timestamp.now() }
-                
-                Log.d(TAG, "Emitting ${validPermits.size} permits for stage $stage")
-                validPermits
-            }
-            .catch { e ->
-                Log.e(TAG, "Critical error in getPermitsByApprovalStageFlow: ${e.message}", e)
-                emit(emptyList())
-            }
-    }
-
-    // Get single permit by ID
     fun getPermitById(permitId: String): Flow<PermitModel?> {
         return permitsCollection.document(permitId).snapshots()
+            .map { it.toObject(PermitModel::class.java) }
+    }
+
+    fun getPermitsByApprovalStageFlow(stage: String): Flow<List<PermitModel>> {
+        return permitsCollection
+            .snapshots()
             .map { snapshot ->
-                snapshot.toObject(PermitModel::class.java)
-            }
-            .catch { e ->
-                Log.e(TAG, "Error getting permit by ID: ${e.message}", e)
-                emit(null)
+                snapshot.toObjects(PermitModel::class.java).filter { permit ->
+                    val permitStage = permit.approvalStage ?: if (permit.status == "submitted" || permit.status == "pending") "issuer_review" else ""
+                    permitStage == stage &&
+                    permit.status != "rejected" && permit.status != "sent_back" && permit.status != "closed" && permit.status != "draft"
+                }.sortedByDescending { it.createdAt }
             }
     }
 
-    // Create new permit
+    fun getAllPendingApprovalsFlow(): Flow<List<PermitModel>> {
+        return permitsCollection
+            .snapshots()
+            .map { snapshot ->
+                snapshot.toObjects(PermitModel::class.java).filter { permit ->
+                    val permitStage = permit.approvalStage ?: if (permit.status == "submitted" || permit.status == "pending") "issuer_review" else ""
+                    // Include review stages AND issued/active for Supervisor closure flow
+                    (permitStage == "issuer_review" || permitStage == "ehs_review" || permitStage == "area_owner_review" || permitStage == "issued" || permitStage == "active") &&
+                    permit.status != "rejected" && permit.status != "sent_back" && permit.status != "closed" && permit.status != "draft"
+                }.sortedByDescending { it.createdAt }
+            }
+    }
+
     suspend fun createPermit(permit: PermitModel): Result<PermitModel> {
         return try {
             val id = if (permit.id.isEmpty()) UUID.randomUUID().toString() else permit.id
-            val permitNumber =
-                if (permit.permitNumber.isEmpty()) generatePermitNumber() else permit.permitNumber
+            val permitNumber = if (permit.permitNumber.isEmpty()) generatePermitNumber() else permit.permitNumber
             val newPermit = permit.copy(
                 id = id,
                 permitNumber = permitNumber,
@@ -116,40 +73,15 @@ class FirebaseRepository @Inject constructor() {
             permitsCollection.document(id).set(newPermit).await()
             Result.success(newPermit)
         } catch (e: Exception) {
-            Log.e(TAG, "Error creating permit", e)
             Result.failure(e)
         }
     }
 
-    // Submit permit for approval
-    suspend fun submitPermit(permitId: String): Result<Unit> {
+    suspend fun approvePermit(permitId: String, role: String, userId: String, userName: String, comments: String?): Result<Unit> {
         return try {
-            val updates = hashMapOf<String, Any>(
-                "status" to "submitted",
-                "approvalStage" to ApprovalStage.ISSUER_REVIEW,
+            val updates = mutableMapOf<String, Any>(
                 "updatedAt" to Timestamp.now()
             )
-            permitsCollection.document(permitId).update(updates).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error submitting permit", e)
-            Result.failure(e)
-        }
-    }
-
-    // Approve permit at current stage
-    suspend fun approvePermit(
-        permitId: String, role: String, userId: String, userName: String, comments: String?
-    ): Result<PermitModel> {
-        return try {
-            val permitDoc = permitsCollection.document(permitId).get().await()
-            val currentPermit = permitDoc.toObject(PermitModel::class.java)
-
-            if (currentPermit == null) {
-                return Result.failure(Exception("Permit not found"))
-            }
-
-            val updates = mutableMapOf<String, Any>()
 
             when (role) {
                 "issuer" -> {
@@ -157,172 +89,196 @@ class FirebaseRepository @Inject constructor() {
                     updates["issuerName"] = userName
                     updates["issuerReviewedAt"] = Timestamp.now()
                     updates["issuerComments"] = comments ?: ""
-                    updates["approvalStage"] = ApprovalStage.EHS_REVIEW
+                    updates["approvalStage"] = "ehs_review"
                 }
-
                 "ehs" -> {
                     updates["ehsId"] = userId
                     updates["ehsName"] = userName
                     updates["ehsReviewedAt"] = Timestamp.now()
                     updates["ehsComments"] = comments ?: ""
-                    updates["approvalStage"] = ApprovalStage.AREA_OWNER_REVIEW
+                    updates["approvalStage"] = "area_owner_review"
                 }
-
                 "area_owner" -> {
                     updates["areaOwnerId"] = userId
                     updates["areaOwnerName"] = userName
                     updates["areaOwnerReviewedAt"] = Timestamp.now()
                     updates["areaOwnerComments"] = comments ?: ""
-                    updates["approvalStage"] = ApprovalStage.ISSUED
+                    updates["approvalStage"] = "issued"
                     updates["status"] = "issued"
                 }
-
-                else -> return Result.failure(Exception("Invalid role for approval"))
             }
-
-            updates["updatedAt"] = Timestamp.now()
             permitsCollection.document(permitId).update(updates).await()
-
-            val updatedPermit = permitsCollection.document(permitId).get().await()
-            Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error approving permit", e)
-            Result.failure(e)
-        }
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    // Reject permit
-    suspend fun rejectPermit(
-        permitId: String,
-        role: String,
-        userId: String,
-        userName: String,
-        comments: String
-    ): Result<PermitModel> {
+    suspend fun rejectPermit(permitId: String, role: String, userId: String, userName: String, comments: String): Result<Unit> {
         return try {
-            val updates = hashMapOf<String, Any>(
+            val updates = mutableMapOf<String, Any>(
                 "status" to "rejected",
                 "approvalStage" to "rejected",
-                "updatedAt" to Timestamp.now(),
-                "${role}Id" to userId,
-                "${role}Name" to userName,
-                "${role}ReviewedAt" to Timestamp.now(),
-                "${role}Comments" to comments
-            )
-
-            permitsCollection.document(permitId).update(updates).await()
-
-            val updatedPermit = permitsCollection.document(permitId).get().await()
-            Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error rejecting permit", e)
-            Result.failure(e)
-        }
-    }
-
-    // Send back permit for revision
-    suspend fun sendBackPermit(
-        permitId: String, role: String, userId: String, userName: String, comments: String
-    ): Result<PermitModel> {
-        return try {
-            val updates = hashMapOf<String, Any>(
-                "status" to "sent_back",
-                "approvalStage" to ApprovalStage.SENT_BACK,
                 "updatedAt" to Timestamp.now()
             )
-
             when (role) {
                 "issuer" -> {
-                    updates["issuerComments"] = comments
+                    updates["issuerId"] = userId
+                    updates["issuerName"] = userName
                     updates["issuerReviewedAt"] = Timestamp.now()
+                    updates["issuerComments"] = comments
                 }
-
                 "ehs" -> {
-                    updates["ehsComments"] = comments
+                    updates["ehsId"] = userId
+                    updates["ehsName"] = userName
                     updates["ehsReviewedAt"] = Timestamp.now()
+                    updates["ehsComments"] = comments
                 }
-
                 "area_owner" -> {
-                    updates["areaOwnerComments"] = comments
+                    updates["areaOwnerId"] = userId
+                    updates["areaOwnerName"] = userName
                     updates["areaOwnerReviewedAt"] = Timestamp.now()
+                    updates["areaOwnerComments"] = comments
                 }
             }
-
             permitsCollection.document(permitId).update(updates).await()
-
-            val updatedPermit = permitsCollection.document(permitId).get().await()
-            Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error sending back permit", e)
-            Result.failure(e)
-        }
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    // Close permit (Supervisor)
-    suspend fun closePermit(
-        permitId: String, supervisorId: String, supervisorName: String, comments: String
-    ): Result<PermitModel> {
+    suspend fun sendBackPermit(permitId: String, role: String, userId: String, userName: String, comments: String): Result<Unit> {
         return try {
-            val updates = hashMapOf<String, Any>(
-                "status" to "closed",
-                "approvalStage" to ApprovalStage.CLOSED,
-                "supervisorId" to supervisorId,
-                "supervisorName" to supervisorName,
-                "closureComments" to comments,
-                "closedAt" to Timestamp.now(),
+            val updates = mutableMapOf<String, Any>(
+                "status" to "sent_back",
+                "approvalStage" to "sent_back",
                 "updatedAt" to Timestamp.now()
             )
-
+            when (role) {
+                "issuer" -> {
+                    updates["issuerId"] = userId
+                    updates["issuerName"] = userName
+                    updates["issuerReviewedAt"] = Timestamp.now()
+                    updates["issuerComments"] = comments
+                }
+                "ehs" -> {
+                    updates["ehsId"] = userId
+                    updates["ehsName"] = userName
+                    updates["ehsReviewedAt"] = Timestamp.now()
+                    updates["ehsComments"] = comments
+                }
+                "area_owner" -> {
+                    updates["areaOwnerId"] = userId
+                    updates["areaOwnerName"] = userName
+                    updates["areaOwnerReviewedAt"] = Timestamp.now()
+                    updates["areaOwnerComments"] = comments
+                }
+            }
             permitsCollection.document(permitId).update(updates).await()
-
-            val updatedPermit = permitsCollection.document(permitId).get().await()
-            Result.success(updatedPermit.toObject(PermitModel::class.java)!!)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error closing permit", e)
-            Result.failure(e)
-        }
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    // Add attachment reference to permit
-    suspend fun addAttachmentToPermit(
-        permitId: String, attachment: Map<String, Any>
-    ): Result<Unit> {
+    suspend fun submitDraftPermit(permitId: String): Result<Unit> {
+        return try {
+            val updates = mapOf(
+                "status" to "submitted",
+                "approvalStage" to "issuer_review",
+                "updatedAt" to Timestamp.now()
+            )
+            permitsCollection.document(permitId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun resubmitPermit(permitId: String): Result<Unit> {
+        return submitDraftPermit(permitId)
+    }
+
+    suspend fun deletePermit(permitId: String): Result<Unit> {
+        return try {
+            permitsCollection.document(permitId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun closePermit(permitId: String, userId: String, userName: String, comments: String): Result<Unit> {
+        return try {
+            val updates = mapOf(
+                "status" to "closed",
+                "approvalStage" to "closed",
+                "supervisorId" to userId,
+                "supervisorName" to userName,
+                "closedAt" to Timestamp.now(),
+                "closureComments" to comments,
+                "updatedAt" to Timestamp.now()
+            )
+            permitsCollection.document(permitId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun workerSignIn(permitId: String, userId: String, workerName: String, signedInByName: String): Result<Unit> {
+        return try {
+            val workerId = UUID.randomUUID().toString()
+            val workerData = mapOf(
+                "id" to workerId,
+                "name" to workerName,
+                "signInAt" to Timestamp.now(),
+                "signedInById" to userId,
+                "signedInByName" to signedInByName
+            )
+            
+            // 1. Add to sub-collection
+            permitsCollection.document(permitId).collection("worker_log")
+                .document(workerId).set(workerData).await()
+            
+            // 2. Ensure status is active
+            permitsCollection.document(permitId).update(
+                mapOf(
+                    "status" to "active",
+                    "approvalStage" to "active",
+                    "updatedAt" to Timestamp.now()
+                )
+            ).await()
+            
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun workerSignOut(permitId: String, logEntryId: String): Result<Unit> {
+        return try {
+            permitsCollection.document(permitId).collection("worker_log")
+                .document(logEntryId).update("signOutAt", Timestamp.now()).await()
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    fun getWorkerLogFlow(permitId: String): Flow<List<WorkerModel>> {
+        return permitsCollection.document(permitId).collection("worker_log")
+            .orderBy("signInAt", Query.Direction.ASCENDING)
+            .snapshots()
+            .map { it.toObjects(WorkerModel::class.java) }
+    }
+
+    suspend fun updatePermitStatus(permitId: String, status: String, comments: String): Result<Unit> {
+        return try {
+            val updates = mapOf("status" to status, "updatedAt" to Timestamp.now(), "statusComment" to comments)
+            permitsCollection.document(permitId).update(updates).await()
+            Result.success(Unit)
+        } catch (e: Exception) { Result.failure(e) }
+    }
+
+    suspend fun addAttachmentToPermit(permitId: String, attachment: Map<String, Any>): Result<Unit> {
         return try {
             permitsCollection.document(permitId).collection("attachments")
                 .document(attachment["id"] as String).set(attachment).await()
             Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error saving attachment record", e)
-            Result.failure(e)
-        }
+        } catch (e: Exception) { Result.failure(e) }
     }
 
-    // Get attachments for permit
     fun getAttachmentsFlow(permitId: String): Flow<List<Map<String, Any>>> {
         return permitsCollection.document(permitId).collection("attachments")
             .orderBy("uploadedAt", Query.Direction.DESCENDING)
             .snapshots()
-            .map { snapshot ->
-                snapshot.documents.map { it.data ?: emptyMap() }
-            }
-    }
-
-    // Update permit status
-    suspend fun updatePermitStatus(
-        permitId: String, status: String, comments: String
-    ): Result<Unit> {
-        return try {
-            val updates = hashMapOf<String, Any>(
-                "status" to status,
-                "updatedAt" to Timestamp.now(),
-                "statusComment" to comments
-            )
-            permitsCollection.document(permitId).update(updates).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Log.e(TAG, "Error updating permit status", e)
-            Result.failure(e)
-        }
+            .map { snapshot -> snapshot.documents.map { it.data ?: emptyMap() } }
     }
 
     private fun generatePermitNumber(): String {

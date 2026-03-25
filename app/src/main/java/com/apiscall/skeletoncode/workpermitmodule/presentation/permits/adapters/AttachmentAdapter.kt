@@ -50,7 +50,6 @@ class AttachmentAdapter(
             binding.tvUploadedBy.text = "Uploaded by: ${attachment.uploadedBy.fullName}"
             binding.tvUploadedAt.text = dateFormat.format(attachment.uploadedAt)
 
-            // Set icon based on file type
             val iconRes = when {
                 attachment.fileType.contains("image") -> R.drawable.ic_image
                 attachment.fileType.contains("pdf") -> R.drawable.ic_pdf
@@ -59,37 +58,8 @@ class AttachmentAdapter(
             }
             binding.ivFileIcon.setImageResource(iconRes)
 
-            // If it's an image, try to load thumbnail from local file
-            if (attachment.fileType.contains("image")) {
-                val file = File(attachment.filePath)
-                if (file.exists()) {
-                    Glide.with(binding.root.context)
-                        .load(file)
-                        .placeholder(iconRes)
-                        .error(iconRes)
-                        .centerCrop()
-                        .into(binding.ivFileIcon)
-                }
-            }
-
             binding.root.setOnClickListener {
-                // Open file with system viewer
-                val context = binding.root.context
-                val file = File(attachment.filePath)
-                if (file.exists()) {
-                    val uri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        file
-                    )
-                    val intent = Intent(Intent.ACTION_VIEW).apply {
-                        setDataAndType(uri, attachment.fileType)
-                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    }
-                    context.startActivity(Intent.createChooser(intent, "Open File"))
-                } else {
-                    onItemClick(attachment)
-                }
+                onItemClick(attachment)
             }
         }
 

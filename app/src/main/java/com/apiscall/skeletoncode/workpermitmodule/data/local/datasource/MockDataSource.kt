@@ -94,7 +94,7 @@ class MockDataSource @Inject constructor() {
                 User(
                     id = "7",
                     username = "worker",
-                    email = "worker@ptw.local",
+                    email = "worker.p1@ptw.local",
                     fullName = "Worker User",
                     role = Role.WORKER,
                     department = "Field Operations",

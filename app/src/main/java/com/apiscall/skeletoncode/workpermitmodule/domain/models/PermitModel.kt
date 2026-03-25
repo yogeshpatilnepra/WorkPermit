@@ -6,6 +6,16 @@ import com.google.firebase.firestore.PropertyName
 import kotlinx.parcelize.Parcelize
 
 @Parcelize
+data class WorkerModel(
+    val id: String = "",
+    val name: String = "",
+    val signInAt: Timestamp? = null,
+    val signOutAt: Timestamp? = null,
+    val signedInById: String = "",
+    val signedInByName: String = ""
+) : Parcelable
+
+@Parcelize
 data class PermitModel(
     val id: String = "",
     val permitNumber: String = "",
@@ -30,7 +40,7 @@ data class PermitModel(
     val status: String = "draft",
 
     // Approval Stage Tracking
-    val approvalStage: String = "issuer_review", // issuer_review, ehs_review, area_owner_review, issued, closed
+    val approvalStage: String = "issuer_review", // issuer_review, ehs_review, area_owner_review, issued, active, closed
     val issuerId: String? = null,
     val issuerName: String? = null,
     val issuerReviewedAt: Timestamp? = null,

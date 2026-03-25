@@ -6,6 +6,15 @@ import java.util.Date
 
 
 @Parcelize
+data class WorkerSignIn(
+    val id: String,
+    val name: String,
+    val signInAt: Date,
+    val signOutAt: Date? = null,
+    val signedInBy: User
+) : Parcelable
+
+@Parcelize
 data class Permit(
     val id: String,
     val permitNumber: String,
@@ -32,6 +41,7 @@ data class Permit(
     val attachments: List<Attachment> = emptyList(),
     val approvalHistory: List<ApprovalHistory> = emptyList(),
     val workers: List<User> = emptyList(),
+    val workerLog: List<WorkerSignIn> = emptyList(),
     val remarks: String? = null,
     val closureRemarks: String? = null,
     val closedAt: Date? = null,

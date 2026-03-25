@@ -8,12 +8,14 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.apiscall.skeletoncode.databinding.ItemPermitCardBinding
 import com.apiscall.skeletoncode.workpermitmodule.domain.models.Permit
+import com.apiscall.skeletoncode.workpermitmodule.domain.models.Role
 import com.apiscall.skeletoncode.workpermitmodule.utils.getStatusColor
 import com.apiscall.skeletoncode.workpermitmodule.utils.getStatusText
 import java.text.SimpleDateFormat
 import java.util.*
 
 class PermitAdapter(
+    private var currentUserRole: Role? = null,
     private val onItemClick: (String) -> Unit,
     private val onApproveClick: ((String) -> Unit)? = null,
     private val onRejectClick: ((String) -> Unit)? = null,
@@ -36,7 +38,8 @@ class PermitAdapter(
     }
 
     override fun onBindViewHolder(holder: PermitViewHolder, position: Int) {
-        holder.bind(getItem(position))
+        // Pass the CURRENT role at bind time, not at ViewHolder creation time
+        holder.bind(getItem(position), currentUserRole)
     }
 
     class PermitViewHolder(
@@ -48,7 +51,7 @@ class PermitAdapter(
         private val dateFormat: SimpleDateFormat
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(permit: Permit) {
+        fun bind(permit: Permit, currentUserRole: Role?) {
             binding.tvPermitNumber.text = permit.permitNumber
             binding.tvPermitType.text = permit.permitType.name.replace("_", " ").lowercase()
                 .replaceFirstChar { it.uppercase() }
@@ -58,12 +61,20 @@ class PermitAdapter(
             binding.tvStatus.setBackgroundResource(getStatusColor(permit.status.name))
             binding.tvDate.text = dateFormat.format(permit.createdAt)
 
-            // Show action buttons only if approval stage is review and callbacks are provided
-            val isApprovalStage = permit.approvalStage == "issuer_review" ||
-                    permit.approvalStage == "ehs_review" ||
-                    permit.approvalStage == "area_owner_review"
+            val stage = permit.approvalStage.lowercase().trim()
 
-            if (isApprovalStage && onApproveClick != null && onRejectClick != null && onSendBackClick != null) {
+            // Show action buttons ONLY when the permit's stage matches the user's role
+            // This prevents one role from approving multiple times
+            val isReviewStage = stage == "issuer_review" || stage == "ehs_review" || stage == "area_owner_review"
+            val canApprove = when (currentUserRole) {
+                Role.ISSUER -> stage == "issuer_review"
+                Role.EHS_OFFICER -> stage == "ehs_review"
+                Role.AREA_OWNER -> stage == "area_owner_review"
+                Role.ADMIN, Role.SUPERVISOR -> isReviewStage
+                else -> false
+            }
+
+            if (canApprove && onApproveClick != null && onRejectClick != null && onSendBackClick != null) {
                 binding.actionButtons.visibility = View.VISIBLE
                 binding.btnApprove.setOnClickListener {
                     onApproveClick.invoke(permit.id)
@@ -80,6 +91,11 @@ class PermitAdapter(
 
             binding.root.setOnClickListener { onItemClick(permit.id) }
         }
+    }
+
+    fun setCurrentUserRole(role: Role?) {
+        this.currentUserRole = role
+        notifyDataSetChanged()
     }
 
     class PermitDiffCallback : DiffUtil.ItemCallback<Permit>() {

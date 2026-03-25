@@ -24,7 +24,7 @@ class HistoryApprovalsFragment : Fragment() {
     private var _binding: FragmentApprovalsListBinding? = null
     private val binding get() = _binding!!
 
-    private val viewModel: ApprovalQueueViewModel by viewModels()
+    private val viewModel: ApprovalQueueViewModel by viewModels({ requireParentFragment() })
     private lateinit var historyAdapter: PermitActionAdapter
 
     override fun onCreateView(

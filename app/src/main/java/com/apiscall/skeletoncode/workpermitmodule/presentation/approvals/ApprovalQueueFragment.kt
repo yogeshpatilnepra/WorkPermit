@@ -57,7 +57,7 @@ class ApprovalQueueFragment : Fragment() {
     }
 
     private fun setupViewPager() {
-        pagerAdapter = ApprovalsPagerAdapter(requireActivity(), fragments, titles)
+        pagerAdapter = ApprovalsPagerAdapter(this, fragments, titles)
         binding.viewPager.adapter = pagerAdapter
 
         // Attach TabLayout to ViewPager2

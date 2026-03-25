@@ -54,14 +54,13 @@ class MyPermitsViewModel @Inject constructor(
             // For Requestor, Supervisor, Admin - show only their permits
             firebaseRepository.getPermitsFlow().collect { permitModels ->
                 val filteredPermits = when (user.role) {
-                    Role.EHS_OFFICER, Role.ISSUER, Role.AREA_OWNER -> {
-                        // These roles can see all permits
-                        permitModels
-                    }
-
-                    else -> {
+                    Role.REQUESTOR, Role.SUPERVISOR, Role.ADMIN -> {
                         // Requestor, Supervisor, Admin - see only their permits
                         permitModels.filter { it.requestorId == user.id }
+                    }
+                    else -> {
+                        // Issuer, EHS, Area Owner, Worker - see empty list in My Permits
+                        emptyList()
                     }
                 }
 

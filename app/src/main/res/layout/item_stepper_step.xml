@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:layout_width="80dp"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <View
+            android:id="@+id/stepCircle"
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:background="@drawable/bg_status_draft" />
+
+        <TextView
+            android:id="@+id/stepLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:gravity="center"
+            android:text="Stage"
+            android:textColor="@color/text_secondary"
+            android:textSize="10sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/stepTime"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="12:00"
+            android:textColor="@color/text_hint"
+            android:textSize="8sp" />
+
+    </LinearLayout>
+
+    <View
+        android:id="@+id/stepLine"
+        android:layout_width="40dp"
+        android:layout_height="2dp"
+        android:layout_marginTop="11dp"
+        android:background="@color/divider" />
+
+</LinearLayout>

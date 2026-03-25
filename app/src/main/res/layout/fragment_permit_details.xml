@@ -111,6 +111,40 @@
                         </androidx.constraintlayout.widget.ConstraintLayout>
                     </com.google.android.material.card.MaterialCardView>
 
+                    <!-- NEW: Progress Stepper Card -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="12dp"
+                        app:cardCornerRadius="16dp"
+                        app:cardElevation="2dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="16dp">
+
+                            <TextView style="@style/SectionHeader" android:text="Permit Progress" />
+
+                            <HorizontalScrollView
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:scrollbars="none">
+
+                                <LinearLayout
+                                    android:id="@+id/stepperContainer"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:gravity="center_vertical"
+                                    android:orientation="horizontal"
+                                    android:paddingVertical="8dp">
+                                    <!-- Stepper items will be added programmatically -->
+                                </LinearLayout>
+                            </HorizontalScrollView>
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
                     <!-- Work Info Card -->
                     <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
@@ -371,33 +405,7 @@
                                 android:layout_marginTop="4dp"
                                 android:orientation="vertical" />
 
-                            <LinearLayout
-                                android:id="@+id/cardSafetyVerification"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:orientation="horizontal">
 
-                                <com.google.android.material.checkbox.MaterialCheckBox
-                                    android:id="@+id/cbToolboxTalkDone"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:enabled="false"
-                                    android:minHeight="0dp"
-                                    android:text="Toolbox Talk"
-                                    android:textSize="12sp" />
-
-                                <com.google.android.material.checkbox.MaterialCheckBox
-                                    android:id="@+id/cbPpeVerified"
-                                    android:layout_width="0dp"
-                                    android:layout_height="wrap_content"
-                                    android:layout_weight="1"
-                                    android:enabled="false"
-                                    android:minHeight="0dp"
-                                    android:text="PPE Verified"
-                                    android:textSize="12sp" />
-                            </LinearLayout>
 
                         </LinearLayout>
                     </com.google.android.material.card.MaterialCardView>
@@ -474,6 +482,46 @@
 
                     <!-- Actions -->
                     <LinearLayout
+                        android:id="@+id/requestorActions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="16dp"
+                        android:orientation="horizontal"
+                        android:visibility="gone">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnSubmit"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="@color/safety_green"
+                            android:text="Submit"
+                            app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnResubmit"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:backgroundTint="@color/safety_blue"
+                            android:text="Resubmit"
+                            app:cornerRadius="12dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnDelete"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="0dp"
+                            android:layout_height="56dp"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:text="Delete"
+                            app:strokeColor="@color/safety_red"
+                            app:cornerRadius="12dp" />
+                    </LinearLayout>
+
+                    <LinearLayout
                         android:id="@+id/approvalActions"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -532,26 +580,30 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="16dp"
-                        android:orientation="horizontal"
+                        android:orientation="vertical"
                         android:visibility="gone">
+
+                        <TextView style="@style/SectionHeader" android:text="Workforce Sign-In" />
+
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/rvWorkerLog"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:nestedScrollingEnabled="false"
+                            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                            tools:listitem="@layout/item_worker" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/btnSignInWorker"
                             android:layout_width="match_parent"
                             android:layout_height="56dp"
+                            android:layout_marginTop="12dp"
                             android:backgroundTint="@color/safety_green"
-                            android:text="Worker Sign In"
-                            android:visibility="gone"
-                            app:cornerRadius="12dp" />
+                            android:text="Add Worker / Sign In"
+                            app:cornerRadius="12dp"
+                            app:icon="@drawable/ic_add" />
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSignOutWorker"
-                            android:layout_width="match_parent"
-                            android:layout_height="56dp"
-                            android:backgroundTint="@color/safety_orange"
-                            android:text="Worker Sign Out"
-                            android:visibility="gone"
-                            app:cornerRadius="12dp" />
                     </LinearLayout>
 
                 </LinearLayout>
